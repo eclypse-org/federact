@@ -22,6 +22,9 @@ include = ["fedclypse*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Ignore iCloud sync-conflict duplicate files (e.g. "test_runtime 2.py") so they
+# are never collected/run twice.
+addopts = "--ignore-glob='* [0-9].py'"
 
 [tool.commitizen]
 name = "cz_conventional_commits"

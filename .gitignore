@@ -132,3 +132,7 @@ dmypy.json
 
 # macOS
 .DS_Store
+
+# iCloud sync-conflict duplicates (e.g. "entity 2.py", "test_runtime 3.py")
+* [0-9].py
+* [0-9].*
