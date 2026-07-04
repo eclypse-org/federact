@@ -68,3 +68,33 @@ def build_simulation(
     simulation = Simulation(infrastructure, simulation_config=config)
     simulation.register(application, RandomStrategy(seed=seed))
     return simulation
+
+
+def run_federation(
+    simulation: Simulation,
+    rounds: int,
+    *,
+    step_delay: float = 0.5,
+    grace: float = 1.0,
+) -> "History":
+    """Drive an emulation to completion and return its collected History.
+
+    Encapsulates the verified emulation recipe: ``start``, then advance the simulation
+    manually ``rounds`` times (each ``step()`` is a fire-and-forget remote call, so a
+    short ``step_delay`` is needed for it to take effect), wait ``grace`` seconds for
+    the last round's messages to settle, then ``stop()`` (blocking; it cancels the
+    service tasks and tears down the Ray actors). The FL rounds progress autonomously
+    inside the entities' ``run()`` loops — faster than the driver's steps — so the last
+    sampled metric reflects the converged state. No ``ray.shutdown()`` is required.
+    """
+    import time
+
+    from fedclypse.metrics import History
+
+    simulation.start()
+    for _ in range(rounds):
+        simulation.step()
+        time.sleep(step_delay)
+    time.sleep(grace)
+    simulation.stop()
+    return History.from_report(simulation.report)
