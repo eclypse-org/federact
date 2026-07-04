@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Optional
 
-from fedclypse.core.parameters import Parameters
+from fedclypse.parameters import Parameters
 
 
 @dataclass

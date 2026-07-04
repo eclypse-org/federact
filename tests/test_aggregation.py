@@ -2,14 +2,14 @@
 import numpy as np
 import pytest
 
-from fedclypse.core.aggregate import (
+from fedclypse.aggregation import (
     IncompatibleContributionsError,
     fedavg,
     mean,
     weighted_sum,
 )
-from fedclypse.core.contribution import Contribution, parameters
-from fedclypse.core.parameters import Parameters
+from fedclypse.contribution import Contribution, parameters
+from fedclypse.parameters import Parameters
 
 
 def _p(*arrays):

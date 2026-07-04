@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from typing import List
 
-from fedclypse.core.contribution import Contribution
-from fedclypse.core.parameters import Parameters
+from fedclypse.contribution import Contribution
+from fedclypse.parameters import Parameters
 
 
 class IncompatibleContributionsError(ValueError):
