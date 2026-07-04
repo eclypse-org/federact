@@ -30,3 +30,14 @@ def test_torch_model_descriptor_defaults_to_module_class_name():
 
 def test_torch_model_custom_descriptor():
     assert TorchModel(nn.Linear(2, 1), descriptor="mlp").descriptor == "mlp"
+
+
+def test_torch_model_roundtrip_preserves_distinct_per_tensor_values():
+    m = TorchModel(nn.Linear(3, 2))
+    target = [
+        np.arange(t.size, dtype=np.float32).reshape(t.shape) + 1.0
+        for t in m.get_parameters().tensors
+    ]
+    m.set_parameters(Parameters(target, "torch"))
+    after = m.get_parameters().tensors
+    assert all(np.allclose(a, b) for a, b in zip(after, target))

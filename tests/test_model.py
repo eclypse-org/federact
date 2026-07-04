@@ -40,3 +40,14 @@ def test_array_model_default_descriptor():
 
 def test_array_model_custom_descriptor():
     assert ArrayModel(_p([1.0]), descriptor="cnn").descriptor == "cnn"
+
+
+def test_array_model_set_copies_all_tensors_and_preserves_type():
+    src = Parameters([np.array([1.0, 2.0]), np.array([[3.0], [4.0]])], "custom")
+    m = ArrayModel(_p([0.0]))
+    m.set_parameters(src)
+    src.tensors[1][0, 0] = 99.0
+    got = m.get_parameters()
+    assert got.tensor_type == "custom"
+    assert np.allclose(got.tensors[0], [1.0, 2.0])
+    assert got.tensors[1][0, 0] == 3.0
