@@ -53,3 +53,15 @@ def test_split_with_dirichlet_produces_disjoint_materializable_shards():
         shard = cd.materialize()
         seen.extend(shard[j] for j in range(len(shard)))
     assert sorted(seen) == data  # every sample delivered exactly once, values intact
+
+
+def test_client_data_copies_indices_to_avoid_aliasing():
+    idx = [0, 1]
+    cd = ClientData(InMemorySource([10, 11, 12], [0, 0, 1]), idx)
+    idx.append(2)
+    assert cd.indices == [0, 1]
+
+
+def test_subset_supports_empty_indices():
+    sub = Subset(["a", "b"], [])
+    assert len(sub) == 0

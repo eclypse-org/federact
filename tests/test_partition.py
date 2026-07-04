@@ -89,3 +89,10 @@ def test_natural_id_groups_indices_by_their_id():
     m = NaturalId([7, 7, 9, 9, 9, 3]).partition(labels=None, num_clients=99, seed=0)
     assert m == {"client_7": [0, 1], "client_9": [2, 3, 4], "client_3": [5]}
     assert _all_python_ints(m)
+
+
+def test_pathological_gives_empty_clients_when_more_clients_than_samples():
+    m = Pathological(1).partition(np.array([0, 1]), num_clients=4, seed=0)
+    assert set(m) == {"client_0", "client_1", "client_2", "client_3"}
+    assert _covers_all(m, 2)
+    assert sum(len(v) == 0 for v in m.values()) >= 2

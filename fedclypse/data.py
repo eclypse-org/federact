@@ -50,6 +50,9 @@ class ClientData:
     source: DataSource
     indices: List[int]
 
+    def __post_init__(self) -> None:
+        self.indices = list(self.indices)
+
     def materialize(self) -> Subset:
         return Subset(self.source.open(), self.indices)
 
