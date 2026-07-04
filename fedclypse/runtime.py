@@ -35,12 +35,17 @@ def build_simulation(
     seed: int = 0,
     mode: str = "emulation",
     n_clients: Optional[int] = None,
+    metrics: Optional[List] = None,
 ) -> Simulation:
     """Wire an Application into an eclypse Simulation (does NOT run it).
 
     ``mode="emulation"`` sets ``remote=True`` (Ray-backed, real ``run()`` execution);
     ``mode="simulation"`` sets ``remote=False`` (placement/comm/timing only).
-    Infrastructure defaults to a star sized to the number of client services.
+    ``metrics`` is a list of ``@metric.service`` objects collected during the run.
+    The default infrastructure is a star sized to the number of client services, built
+    with ``include_default_assets=False`` so placement is always feasible (an infra with
+    default resource assets is not guaranteed to fit the Application's default service
+    requirements); pass an explicit ``infrastructure`` to model resources.
     """
     if infrastructure is None:
         clients = (
@@ -48,7 +53,7 @@ def build_simulation(
         )
         infrastructure = get_star(
             n_clients=clients,
-            include_default_assets=True,
+            include_default_assets=False,
             resource_init="max",
             symmetric=True,
             seed=seed,
@@ -58,6 +63,7 @@ def build_simulation(
         max_steps=rounds,
         seed=seed,
         include_default_metrics=True,
+        events=list(metrics) if metrics else None,
     )
     simulation = Simulation(infrastructure, simulation_config=config)
     simulation.register(application, RandomStrategy(seed=seed))
