@@ -12,7 +12,11 @@ def select_all(neighbours: List[str]) -> List[str]:
 
 def uniform(fraction: float, seed: int = 0) -> Callable[[List[str]], List[str]]:
     """Return a policy that uniformly samples ``fraction`` of the neighbours
-    (at least one when any exist), deterministically for the given ``seed``."""
+    (at least one when any exist), deterministically for the given ``seed``.
+
+    Each call advances the RNG, so successive rounds get fresh cohorts; the seed
+    reproduces the whole sequence, not a fixed cohort.
+    """
     rng = random.Random(seed)
 
     def select(neighbours: List[str]) -> List[str]:
@@ -25,7 +29,11 @@ def uniform(fraction: float, seed: int = 0) -> Callable[[List[str]], List[str]]:
 
 def at_most(k: int, seed: int = 0) -> Callable[[List[str]], List[str]]:
     """Return a policy that samples at most ``k`` neighbours, deterministically
-    for the given ``seed``."""
+    for the given ``seed``.
+
+    Each call advances the RNG, so successive rounds get fresh cohorts; the seed
+    reproduces the whole sequence, not a fixed cohort.
+    """
     rng = random.Random(seed)
 
     def select(neighbours: List[str]) -> List[str]:

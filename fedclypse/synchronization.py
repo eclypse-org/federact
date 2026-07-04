@@ -27,7 +27,12 @@ class Synchronous(Synchronizer):
 
 
 class BufferedAsync(Synchronizer):
-    """Fire every time ``k`` contributions accumulate, regardless of sender."""
+    """Fire every time ``k`` contributions accumulate, regardless of sender.
+
+    Staleness weighting is intentionally out of scope for this policy: it inherits
+    the flat ``weight() -> 1.0``. A staleness-weighted buffered-async variant
+    (e.g. FedBuff-style) is a future extension.
+    """
 
     def __init__(self, k: int) -> None:
         if k < 1:
