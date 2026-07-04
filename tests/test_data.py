@@ -1,0 +1,39 @@
+# -*- coding: utf-8 -*-
+import numpy as np
+
+from fedclypse.data import ClientData, InMemorySource, Subset, split
+
+
+def test_subset_is_a_lazy_view_by_index():
+    sub = Subset(["a", "b", "c", "d"], [3, 1])
+    assert len(sub) == 2
+    assert sub[0] == "d"
+    assert sub[1] == "b"
+
+
+def test_in_memory_source_exposes_data_and_labels():
+    src = InMemorySource([10, 11, 12], labels=[0, 1, 0])
+    assert list(src.open()) == [10, 11, 12]
+    assert np.array_equal(src.labels(), np.array([0, 1, 0]))
+
+
+def test_client_data_materializes_its_shard_from_the_source():
+    src = InMemorySource([10, 11, 12, 13], labels=[0, 0, 1, 1])
+    shard = ClientData(src, [0, 2]).materialize()
+    assert len(shard) == 2
+    assert shard[0] == 10
+    assert shard[1] == 12
+
+
+def test_split_maps_partitioner_output_to_client_data():
+    class _FakePartitioner:
+        def partition(self, labels, num_clients, seed):
+            return {"client_0": [0, 1], "client_1": [2]}
+
+    src = InMemorySource([10, 11, 12], labels=[0, 1, 0])
+    clients = split(src, _FakePartitioner(), num_clients=2, seed=0)
+
+    assert set(clients) == {"client_0", "client_1"}
+    assert isinstance(clients["client_0"], ClientData)
+    assert clients["client_0"].indices == [0, 1]
+    assert [clients["client_1"].materialize()[0]] == [12]
