@@ -71,3 +71,8 @@ def test_single_shared_descriptor_is_allowed():
         ]
     )
     assert np.allclose(result.tensors[0], [3.0])
+
+
+def test_fedavg_zero_total_weight_raises():
+    with pytest.raises(ValueError):
+        fedavg([parameters(_p([1.0]), weight=0.0), parameters(_p([2.0]), weight=0.0)])

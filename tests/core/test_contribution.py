@@ -27,8 +27,9 @@ def test_params_raises_when_payload_not_parameters():
 
 
 def test_parameters_constructor_carries_provenance():
-    c = parameters(_p([1.0]), source="client_3", version=5,
-                   model_descriptor="cnn", weight=42.0)
+    c = parameters(
+        _p([1.0]), source="client_3", version=5, model_descriptor="cnn", weight=42.0
+    )
     assert c.source == "client_3" and c.version == 5
     assert c.model_descriptor == "cnn" and c.weight == 42.0
     assert isinstance(c.payload, Parameters)

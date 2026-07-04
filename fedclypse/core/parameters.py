@@ -14,6 +14,12 @@ class Parameters:
     This is the default realization of a Contribution's payload and the unit of
     exchange that crosses the wire. It carries no framework object — only numpy
     arrays plus a ``tensor_type`` tag naming the framework they were projected from.
+
+    Construction does not copy: a ``Parameters`` aliases the arrays it is given,
+    and the ``parameters()`` / ``pseudogradient()`` constructors likewise do not
+    copy. Callers needing isolation from later in-place mutation must copy the
+    arrays themselves. The non-mutating helpers (``zeros_like``, ``add``,
+    ``scale``) always return new objects.
     """
 
     tensors: List[np.ndarray]
