@@ -29,8 +29,8 @@ def test_build_simulation_pure_mode_is_not_remote():
     server, clients = _entities(2)
     app = star_application(server, clients)
     sim = build_simulation(app, rounds=5, mode="simulation")
-    assert not sim.simulation_config.remote  # remote=False normalizes to None
-    assert sim.simulation_config.max_steps == 5
+    assert not sim.remote  # remote=False normalizes to None (public attr eclypse sets)
+    assert sim._sim_config.max_steps == 5  # rounds -> max_steps
 
 
 def test_build_simulation_emulation_mode_is_remote():
@@ -40,6 +40,4 @@ def test_build_simulation_emulation_mode_is_remote():
     server, clients = _entities(2)
     app = star_application(server, clients)
     sim = build_simulation(app, rounds=3, mode="emulation")
-    assert (
-        sim.simulation_config.remote
-    )  # remote=True normalizes to a RemoteBootstrap (truthy)
+    assert sim.remote  # remote=True normalizes to a RemoteBootstrap (truthy)

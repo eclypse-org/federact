@@ -11,11 +11,6 @@ from eclypse.simulation import Simulation, SimulationConfig
 from fedclypse.entity import Entity
 
 
-# Expose the simulation config as a public property (eclypse 0.9.0 stores it as _sim_config)
-if not hasattr(Simulation, "simulation_config"):
-    Simulation.simulation_config = property(lambda self: self._sim_config)
-
-
 def star_application(
     server: Entity,
     clients: List[Entity],
