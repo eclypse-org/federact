@@ -24,7 +24,10 @@ def test_synchronous_ready_only_when_whole_cohort_reported():
 
 def test_synchronous_default_weight_is_one():
     s = Synchronous()
-    assert s.weight(Contribution(payload=None, version=0), current_round=5) == 1.0
+    assert (
+        s.staleness_weight(Contribution(payload=None, version=0), current_round=5)
+        == 1.0
+    )
 
 
 def test_buffered_async_ready_at_k():
@@ -47,7 +50,7 @@ def test_asynchronous_ready_on_first_arrival():
 def test_asynchronous_weight_uses_staleness():
     a = Asynchronous()
     c = Contribution(payload=None, version=2)
-    assert a.weight(c, current_round=5) == 0.25  # staleness 3 -> 1/(1+3)
+    assert a.staleness_weight(c, current_round=5) == 0.25  # staleness 3 -> 1/(1+3)
 
 
 def test_inverse_staleness_clamps_negative_to_zero():

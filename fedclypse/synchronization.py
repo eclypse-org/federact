@@ -10,12 +10,12 @@ from fedclypse.contribution import Contribution
 class Synchronizer(ABC):
     """A synchronization policy: the aggregation *trigger*. It decides when a
     round fires (``ready``) and how a contribution is weighted by its staleness
-    (``weight``). Orthogonal to topology and to the aggregation algorithm."""
+    (``staleness_weight``). Orthogonal to topology and to the aggregation algorithm."""
 
     @abstractmethod
     def ready(self, collected: List[Contribution], cohort: List[str]) -> bool: ...
 
-    def weight(self, contribution: Contribution, current_round: int) -> float:
+    def staleness_weight(self, contribution: Contribution, current_round: int) -> float:
         return 1.0
 
 
@@ -60,5 +60,5 @@ class Asynchronous(Synchronizer):
     def ready(self, collected: List[Contribution], cohort: List[str]) -> bool:
         return len(collected) >= 1
 
-    def weight(self, contribution: Contribution, current_round: int) -> float:
+    def staleness_weight(self, contribution: Contribution, current_round: int) -> float:
         return self.staleness_fn(current_round - contribution.version)
