@@ -107,3 +107,20 @@ class QuantitySkew(Partitioner):
             f"client_{i}": chunk.tolist()
             for i, chunk in enumerate(np.split(order, cuts))
         }
+
+
+class NaturalId(Partitioner):
+    """Partition by a natural grouping column (e.g. writer / user / speaker id):
+    one client per unique id, aligned with the samples. ``num_clients`` and ``seed``
+    are accepted for interface uniformity but ignored — the data fixes the split."""
+
+    def __init__(self, ids) -> None:
+        self._ids = list(ids)
+
+    def partition(
+        self, labels: np.ndarray, num_clients: int = 0, seed: int = 0
+    ) -> Dict[str, List[int]]:
+        result: Dict[str, List[int]] = {}
+        for i, gid in enumerate(self._ids):
+            result.setdefault(f"client_{gid}", []).append(int(i))
+        return result

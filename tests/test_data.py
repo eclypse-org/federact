@@ -37,3 +37,19 @@ def test_split_maps_partitioner_output_to_client_data():
     assert isinstance(clients["client_0"], ClientData)
     assert clients["client_0"].indices == [0, 1]
     assert [clients["client_1"].materialize()[0]] == [12]
+
+
+def test_split_with_dirichlet_produces_disjoint_materializable_shards():
+    from fedclypse.partition import Dirichlet
+
+    data = list(range(20))
+    labels = [i % 4 for i in range(20)]
+    src = InMemorySource(data, labels)
+
+    clients = split(src, Dirichlet(0.5), num_clients=3, seed=0)
+
+    seen = []
+    for cd in clients.values():
+        shard = cd.materialize()
+        seen.extend(shard[j] for j in range(len(shard)))
+    assert sorted(seen) == data  # every sample delivered exactly once, values intact

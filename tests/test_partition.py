@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-from fedclypse.partition import Dirichlet, IID, Pathological, QuantitySkew
+from fedclypse.partition import Dirichlet, IID, NaturalId, Pathological, QuantitySkew
 
 
 def _covers_all(index_map, n):
@@ -83,3 +83,9 @@ def test_quantity_skew_is_deterministic_for_a_seed():
 def test_quantity_skew_rejects_non_positive_beta():
     with pytest.raises(ValueError):
         QuantitySkew(0.0)
+
+
+def test_natural_id_groups_indices_by_their_id():
+    m = NaturalId([7, 7, 9, 9, 9, 3]).partition(labels=None, num_clients=99, seed=0)
+    assert m == {"client_7": [0, 1], "client_9": [2, 3, 4], "client_3": [5]}
+    assert _all_python_ints(m)
