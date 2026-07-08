@@ -13,7 +13,7 @@ from typing import List, Optional, TYPE_CHECKING
 
 from eclypse.builders.infrastructure import get_star
 from eclypse.graph import Application, Infrastructure
-from eclypse.placement.strategies import RandomStrategy
+from eclypse.placement.strategies import PlacementStrategy, RandomStrategy
 from eclypse.simulation import Simulation, SimulationConfig
 
 if TYPE_CHECKING:
@@ -22,6 +22,29 @@ if TYPE_CHECKING:
     from fedclypse.metrics import History
 
 __all__ = ["build_simulation", "run_federation"]
+
+
+def _require_symmetric_infrastructure(infrastructure: Infrastructure) -> None:
+    """Reject an infrastructure with one-way edges.
+
+    eclypse silently RESETS a placement (rather than raising a catchable error) when a
+    bidirectional Application edge lacks a reverse infrastructure path, so an asymmetric
+    infrastructure must be caught up front.
+
+    Args:
+        infrastructure (Infrastructure): The infrastructure to validate.
+
+    Raises:
+        ValueError: If any edge lacks its reverse (the infrastructure is not symmetric).
+    """
+    edges = set(infrastructure.edges())
+    missing = [(u, v) for (u, v) in edges if (v, u) not in edges]
+    if missing:
+        raise ValueError(
+            f"Infrastructure has asymmetric edge(s) {missing[:3]}; eclypse silently resets "
+            f"placement when a bidirectional Application edge lacks a reverse path. Build "
+            f"the infrastructure with symmetric=True."
+        )
 
 
 def build_simulation(
@@ -33,6 +56,7 @@ def build_simulation(
     mode: str = "emulation",
     n_clients: Optional[int] = None,
     metrics: Optional[List] = None,
+    placement: Optional[PlacementStrategy] = None,
 ) -> Simulation:
     """Wire an Application into an eclypse Simulation (does NOT run it).
 
@@ -42,7 +66,9 @@ def build_simulation(
     The default infrastructure is a star sized to the number of client services, built
     with ``include_default_assets=False`` so placement is always feasible (an infra with
     default resource assets is not guaranteed to fit the Application's default service
-    requirements); pass an explicit ``infrastructure`` to model resources.
+    requirements); pass an explicit ``infrastructure`` to model resources. Whichever
+    infrastructure is used (default or provided) must be symmetric (every edge has its
+    reverse), or eclypse's ``PlacementManager`` will silently reset the placement.
 
     Args:
         application (Application): The eclypse Application to run (e.g. from
@@ -54,7 +80,7 @@ def build_simulation(
         rounds (int): The simulation's step budget, forwarded to
             ``SimulationConfig.max_steps``.
         seed (int): Seed for the default infrastructure, the simulation
-            config, and the placement strategy. Defaults to ``0``.
+            config, and the default placement strategy. Defaults to ``0``.
         mode (str): ``"emulation"`` for a Ray-backed remote run, or
             ``"simulation"`` for placement/comm/timing only. Defaults to
             ``"emulation"``.
@@ -64,10 +90,17 @@ def build_simulation(
         metrics (Optional[List]): ``@metric.service``-decorated callables to
             collect during the run, forwarded to ``SimulationConfig.events``.
             Defaults to ``None`` (only the default metrics are collected).
+        placement (Optional[PlacementStrategy]): The placement strategy to
+            register ``application`` against. Defaults to ``None``, which
+            uses ``RandomStrategy(seed=seed)``.
 
     Returns:
         Simulation: The assembled Simulation, with ``application`` already
         registered against a placement strategy. Not started.
+
+    Raises:
+        ValueError: If the resolved infrastructure (default or provided) is
+            not symmetric (has an edge without its reverse).
     """
     if infrastructure is None:
         clients = (
@@ -80,6 +113,7 @@ def build_simulation(
             symmetric=True,
             seed=seed,
         )
+    _require_symmetric_infrastructure(infrastructure)
     config = SimulationConfig(
         remote=(mode == "emulation"),
         max_steps=rounds,
@@ -88,7 +122,8 @@ def build_simulation(
         events=list(metrics) if metrics else None,
     )
     simulation = Simulation(infrastructure, simulation_config=config)
-    simulation.register(application, RandomStrategy(seed=seed))
+    strategy = placement if placement is not None else RandomStrategy(seed=seed)
+    simulation.register(application, strategy)
     return simulation
 
 

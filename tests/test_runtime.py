@@ -84,6 +84,34 @@ def test_run_federation_drives_start_steps_stop(monkeypatch):
     assert history.final("fedclypse_round", "server") == 42.0
 
 
+def test_build_simulation_accepts_explicit_placement():
+    from eclypse.placement.strategies import RoundRobinStrategy
+
+    from fedclypse.topology import star
+
+    server = Entity("server")
+    clients = [Entity("client_0"), Entity("client_1")]
+    app = star(server, clients)
+    sim = build_simulation(
+        app, rounds=2, mode="simulation", placement=RoundRobinStrategy()
+    )
+    assert sim is not None
+    assert not sim.remote
+
+
+def test_build_simulation_rejects_asymmetric_infrastructure():
+    from eclypse.builders.infrastructure import get_star
+
+    from fedclypse.topology import star
+
+    server = Entity("server")
+    clients = [Entity("client_0")]
+    app = star(server, clients)
+    asymmetric = get_star(n_clients=2, include_default_assets=False, symmetric=False)
+    with pytest.raises(ValueError, match="symmetric"):
+        build_simulation(app, infrastructure=asymmetric, rounds=2, mode="simulation")
+
+
 def test_fedavg_emulation_smoke():
     """End-to-end FedAvg emulation (1 server + 2 clients, K=2 rounds, torch-free).
     Runs in a fresh subprocess (a remote=True Simulation must not be built in the
