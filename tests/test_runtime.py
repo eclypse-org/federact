@@ -6,7 +6,8 @@ import textwrap
 import pytest
 
 from fedclypse.entity import Entity
-from fedclypse.runtime import build_simulation, star_application
+from fedclypse.runtime import build_simulation
+from fedclypse.topology import star
 
 
 def _entities(n):
@@ -15,23 +16,9 @@ def _entities(n):
     return server, clients
 
 
-def test_star_application_has_server_and_clients_as_services():
-    server, clients = _entities(3)
-    app = star_application(server, clients)
-    assert set(app.nodes) == {"server", "client_0", "client_1", "client_2"}
-
-
-def test_star_application_wires_server_to_every_client():
-    server, clients = _entities(3)
-    app = star_application(server, clients)
-    edge_pairs = {frozenset((u, v)) for u, v in app.edges}
-    for i in range(3):
-        assert frozenset(("server", f"client_{i}")) in edge_pairs
-
-
 def test_build_simulation_pure_mode_is_not_remote():
     server, clients = _entities(2)
-    app = star_application(server, clients)
+    app = star(server, clients)
     sim = build_simulation(app, rounds=5, mode="simulation")
     assert not sim.remote  # remote=False normalizes to None (public attr eclypse sets)
     assert sim._sim_config.max_steps == 5  # rounds -> max_steps
@@ -47,10 +34,11 @@ def test_build_simulation_emulation_mode_is_remote():
     pytest.importorskip("ray")
     script = (
         "from fedclypse.entity import Entity\n"
-        "from fedclypse.runtime import build_simulation, star_application\n"
+        "from fedclypse.runtime import build_simulation\n"
+        "from fedclypse.topology import star\n"
         "server = Entity('server')\n"
         "clients = [Entity('client_0'), Entity('client_1')]\n"
-        "app = star_application(server, clients)\n"
+        "app = star(server, clients)\n"
         "sim = build_simulation(app, rounds=3, mode='emulation')\n"
         "assert sim.remote\n"
         "print('OK')\n"
@@ -117,7 +105,8 @@ def test_fedavg_emulation_smoke():
         from fedclypse.metrics import round_metric
         from fedclypse.model import ArrayModel
         from fedclypse.parameters import Parameters
-        from fedclypse.runtime import build_simulation, run_federation, star_application
+        from fedclypse.runtime import build_simulation, run_federation
+        from fedclypse.topology import star
 
 
         @metric.service(remote=True, name="model_mean")
@@ -148,7 +137,7 @@ def test_fedavg_emulation_smoke():
             )
             for cid in ["client_0", "client_1"]
         ]
-        app = star_application(server, clients)
+        app = star(server, clients)
         sim = build_simulation(
             app, rounds=2, mode="emulation", metrics=[round_metric, model_mean]
         )

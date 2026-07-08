@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 """Runtime assembly and driving: wire fedclypse entities into an eclypse Simulation.
 
-This module turns a set of ``Entity`` instances into a runnable eclypse
-experiment: ``star_application`` builds the client-server topology,
-``build_simulation`` wires it to an infrastructure and a ``SimulationConfig``
-(without running it), and ``run_federation`` drives a built simulation
-through an emulation to completion, returning the collected metric
+This module turns an Application (e.g. from ``fedclypse.topology``) into a runnable
+eclypse experiment: ``build_simulation`` wires it to an infrastructure and a
+``SimulationConfig`` (without running it), and ``run_federation`` drives a built
+simulation through an emulation to completion, returning the collected metric
 ``History``.
 """
 from __future__ import annotations
@@ -17,43 +16,12 @@ from eclypse.graph import Application, Infrastructure
 from eclypse.placement.strategies import RandomStrategy
 from eclypse.simulation import Simulation, SimulationConfig
 
-from fedclypse.entity import Entity
-
 if TYPE_CHECKING:
     # Only for the ``run_federation`` return-type annotation; the real,
     # non-circular import happens inside that function's body (see below).
     from fedclypse.metrics import History
 
-__all__ = ["star_application", "build_simulation", "run_federation"]
-
-
-def star_application(
-    server: Entity,
-    clients: List[Entity],
-    application_id: str = "fedclypse",
-) -> Application:
-    """Build the eclypse Application graph for a client-server federation.
-
-    The server and every client are added as services, with a symmetric
-    interaction edge from the server to each client — a star topology.
-
-    Args:
-        server (Entity): The server entity, placed at the star's hub.
-        clients (List[Entity]): The client entities, each wired to ``server``
-            by a symmetric edge.
-        application_id (str): The eclypse Application's id. Defaults to
-            ``"fedclypse"``.
-
-    Returns:
-        Application: The assembled eclypse Application graph, not yet
-        registered with a Simulation.
-    """
-    app = Application(application_id, include_default_assets=True)
-    app.add_service(server)
-    for client in clients:
-        app.add_service(client)
-        app.add_edge(server.id, client.id, symmetric=True)
-    return app
+__all__ = ["build_simulation", "run_federation"]
 
 
 def build_simulation(
@@ -78,7 +46,7 @@ def build_simulation(
 
     Args:
         application (Application): The eclypse Application to run (e.g. from
-            ``star_application``).
+            ``fedclypse.topology.star``).
         infrastructure (Optional[Infrastructure]): The infrastructure graph to
             place ``application`` on. Defaults to ``None``, which builds a
             star sized to ``n_clients`` (or ``len(application.nodes) - 1``
