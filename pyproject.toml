@@ -13,7 +13,7 @@ license = { text = "MIT" }
 dependencies = ["numpy>=1.24", "eclypse>=0.9,<0.10"]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "black>=24"]
+dev = ["pytest>=8", "black>=24", "ruff>=0.5"]
 torch = ["torch>=2.2", "torchvision>=0.17"]
 emulation = ["ray>=2.5"]
 
@@ -25,6 +25,19 @@ testpaths = ["tests"]
 # Ignore iCloud sync-conflict duplicate files (e.g. "test_runtime 2.py") so they
 # are never collected/run twice.
 addopts = "--ignore-glob='* [0-9].py'"
+
+[tool.setuptools.package-data]
+fedclypse = ["py.typed"]
+
+[tool.ruff.lint]
+select = ["D", "F"]        # D = pydocstyle (docstrings); F = pyflakes (undefined/unused)
+ignore = ["D105"]          # magic-method docstrings (__len__, __getitem__, …) not required
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D"]         # tests need names + assertions, not full docstrings
 
 [tool.commitizen]
 name = "cz_conventional_commits"
