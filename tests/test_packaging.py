@@ -23,6 +23,7 @@ CONCEPT_MODULES = [
     "fedclypse.model",
     "fedclypse.entity",
     "fedclypse.topology",
+    "fedclypse.placement",
     "fedclypse.runtime",
     "fedclypse.fedavg",
     "fedclypse.metrics",
