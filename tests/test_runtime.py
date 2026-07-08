@@ -183,3 +183,63 @@ def test_fedavg_emulation_smoke():
     )
     assert result.returncode == 0, result.stdout + result.stderr
     assert "SMOKE_OK" in result.stdout
+
+
+def test_ring_emulation_smoke():
+    """End-to-end: a non-star (ring) Application graph routes on the default infra.
+
+    A 4-peer ring, each peer broadcasting to its two ring neighbours and receiving from
+    exactly them for 2 rounds, run in a fresh subprocess (a remote=True Simulation must
+    not be built in the pytest process). Verified working in the topology spike. Timing-
+    sensitive; bump step_delay/grace if it flakes.
+    """
+    pytest.importorskip("ray")
+    script = textwrap.dedent(
+        """
+        import asyncio
+        import networkx as nx
+        from eclypse.report.metrics import metric
+
+        from fedclypse.entity import Entity
+        from fedclypse.runtime import build_simulation, run_federation
+        from fedclypse.topology import ring
+
+        ROUNDS = 2
+
+
+        class RingPeer(Entity):
+            async def run(self):
+                neighbours = sorted(await self.neighbours())
+                self.got = 0
+                for r in range(ROUNDS):
+                    await self.broadcast(round=r, ping=self.id)
+                    for _ in range(len(neighbours)):
+                        await self.receive()
+                        self.got += 1
+                self.n_neighbours = len(neighbours)
+                while self.running:
+                    await asyncio.sleep(0.05)
+
+
+        @metric.service(remote=True, name="got")
+        def got(service):
+            return getattr(service, "got", None)
+
+
+        peers = [RingPeer(f"peer_{i}") for i in range(4)]
+        app = ring(peers)
+        sim = build_simulation(app, rounds=ROUNDS, mode="emulation", metrics=[got])
+        history = run_federation(sim, rounds=ROUNDS, step_delay=0.5, grace=1.5)
+
+        # every peer received 2 neighbours x 2 rounds = 4 messages
+        finals = [history.final("got", service_id=f"peer_{i}") for i in range(4)]
+        assert all(f == 4 for f in finals), finals
+        assert sim.status.name == "IDLE"
+        print("RING_SMOKE_OK")
+        """
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", script], capture_output=True, text=True, timeout=180
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "RING_SMOKE_OK" in result.stdout
