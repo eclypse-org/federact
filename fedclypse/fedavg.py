@@ -15,9 +15,9 @@ import asyncio
 from typing import Any, Callable, List, Optional
 
 from fedclypse.aggregation import fedavg
-from fedclypse.contribution import Contribution
-from fedclypse.entity import Entity
-from fedclypse.parameters import Parameters
+from fedclypse.core.contribution import Contribution
+from fedclypse.core.entity import Entity
+from fedclypse.core.parameters import Parameters
 from fedclypse.selection import select_all
 
 __all__ = ["FedAvgServer", "FedAvgClient"]

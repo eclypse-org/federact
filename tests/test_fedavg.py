@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
-from fedclypse.contribution import Contribution
+from fedclypse.core import ArrayModel, Contribution, Parameters
 from fedclypse.data import ClientData, InMemorySource
 from fedclypse.fedavg import FedAvgClient, FedAvgServer
-from fedclypse.model import ArrayModel
-from fedclypse.parameters import Parameters
 from fedclypse.selection import select_all
 
 

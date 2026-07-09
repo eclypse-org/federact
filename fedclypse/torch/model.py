@@ -12,8 +12,8 @@ from typing import Optional
 
 import torch
 
-from fedclypse.model import Model
-from fedclypse.parameters import Parameters
+from fedclypse.core.model import Model
+from fedclypse.core.parameters import Parameters
 
 __all__ = ["TorchModel"]
 

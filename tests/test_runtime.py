@@ -5,7 +5,7 @@ import textwrap
 
 import pytest
 
-from fedclypse.entity import Entity
+from fedclypse.core import Entity
 from fedclypse.runtime import build_simulation
 from fedclypse.topology import star
 
@@ -33,7 +33,7 @@ def test_build_simulation_emulation_mode_is_remote():
     """
     pytest.importorskip("ray")
     script = (
-        "from fedclypse.entity import Entity\n"
+        "from fedclypse.core import Entity\n"
         "from fedclypse.runtime import build_simulation\n"
         "from fedclypse.topology import star\n"
         "server = Entity('server')\n"
@@ -129,10 +129,9 @@ def test_fedavg_emulation_smoke():
         import numpy as np
         from eclypse.report.metrics import metric
 
+        from fedclypse.core import ArrayModel, Parameters
         from fedclypse.fedavg import FedAvgClient, FedAvgServer
         from fedclypse.metrics import round_metric
-        from fedclypse.model import ArrayModel
-        from fedclypse.parameters import Parameters
         from fedclypse.runtime import build_simulation, run_federation
         from fedclypse.topology import star
 
@@ -200,7 +199,7 @@ def test_ring_emulation_smoke():
         import networkx as nx
         from eclypse.report.metrics import metric
 
-        from fedclypse.entity import Entity
+        from fedclypse.core import Entity
         from fedclypse.runtime import build_simulation, run_federation
         from fedclypse.topology import ring
 

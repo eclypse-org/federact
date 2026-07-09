@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-from fedclypse.parameters import Parameters
+from fedclypse.core import Parameters
 
 
 def _p(*arrays):

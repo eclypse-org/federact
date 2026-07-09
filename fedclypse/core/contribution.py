@@ -11,7 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Optional
 
-from fedclypse.parameters import Parameters
+from fedclypse.core.parameters import Parameters
 
 __all__ = ["Contribution", "parameters", "pseudogradient"]
 

@@ -20,7 +20,7 @@ from typing import Dict, List, Sequence, Tuple
 from eclypse.graph import Application, Infrastructure
 from eclypse.placement.strategies import StaticStrategy
 
-from fedclypse.entity import Entity
+from fedclypse.core.entity import Entity
 
 __all__ = ["mirror", "collapse"]
 

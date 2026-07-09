@@ -2,7 +2,7 @@
 import pytest
 from eclypse.builders.infrastructure import get_star
 
-from fedclypse.entity import Entity
+from fedclypse.core import Entity
 from fedclypse.placement import collapse, mirror
 
 

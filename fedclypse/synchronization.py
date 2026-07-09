@@ -15,7 +15,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Callable, List
 
-from fedclypse.contribution import Contribution
+from fedclypse.core.contribution import Contribution
 
 __all__ = [
     "Synchronizer",

@@ -4,10 +4,8 @@ import asyncio
 import numpy as np
 import pytest
 
+from fedclypse.core import ArrayModel, Entity, Parameters
 from fedclypse.data import ClientData, InMemorySource
-from fedclypse.entity import Entity
-from fedclypse.model import ArrayModel
-from fedclypse.parameters import Parameters
 
 
 def _p(*arrays):

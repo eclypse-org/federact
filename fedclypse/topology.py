@@ -16,7 +16,7 @@ from typing import Sequence
 import networkx as nx
 from eclypse.graph import Application
 
-from fedclypse.entity import Entity
+from fedclypse.core.entity import Entity
 
 __all__ = ["from_graph", "star", "ring", "complete"]
 

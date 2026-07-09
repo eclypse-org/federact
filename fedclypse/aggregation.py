@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import List
 
-from fedclypse.contribution import Contribution
-from fedclypse.parameters import Parameters
+from fedclypse.core.contribution import Contribution
+from fedclypse.core.parameters import Parameters
 
 __all__ = ["IncompatibleContributionsError", "weighted_sum", "mean", "fedavg"]
 

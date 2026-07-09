@@ -2,8 +2,7 @@
 import numpy as np
 import pytest
 
-from fedclypse.contribution import Contribution, parameters, pseudogradient
-from fedclypse.parameters import Parameters
+from fedclypse.core import Contribution, Parameters, parameters, pseudogradient
 
 
 def _p(*arrays):

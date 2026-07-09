@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from fedclypse.contribution import Contribution
+from fedclypse.core import Contribution
 from fedclypse.synchronization import (
     Asynchronous,
     BufferedAsync,

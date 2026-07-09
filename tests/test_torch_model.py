@@ -5,7 +5,7 @@ import pytest
 torch = pytest.importorskip("torch")
 from torch import nn  # noqa: E402
 
-from fedclypse.parameters import Parameters  # noqa: E402
+from fedclypse.core import Parameters  # noqa: E402
 from fedclypse.torch import TorchModel  # noqa: E402
 
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import networkx as nx
 
-from fedclypse.entity import Entity
+from fedclypse.core import Entity
 from fedclypse.topology import complete, from_graph, ring, star
 
 

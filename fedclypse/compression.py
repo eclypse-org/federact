@@ -12,7 +12,7 @@ from typing import Callable
 
 import numpy as np
 
-from fedclypse.parameters import Parameters
+from fedclypse.core.parameters import Parameters
 
 __all__ = ["identity", "topk"]
 

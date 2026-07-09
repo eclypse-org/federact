@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from fedclypse.parameters import Parameters
+from fedclypse.core.parameters import Parameters
 
 __all__ = ["Model", "ArrayModel"]
 

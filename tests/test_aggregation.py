@@ -8,8 +8,7 @@ from fedclypse.aggregation import (
     mean,
     weighted_sum,
 )
-from fedclypse.contribution import Contribution, parameters
-from fedclypse.parameters import Parameters
+from fedclypse.core import Contribution, Parameters, parameters
 
 
 def _p(*arrays):

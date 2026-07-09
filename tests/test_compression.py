@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 
 from fedclypse.compression import identity, topk
-from fedclypse.parameters import Parameters
+from fedclypse.core import Parameters
 
 
 def _p(*arrays):
