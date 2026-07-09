@@ -183,6 +183,91 @@ def test_fedavg_emulation_smoke():
     assert "SMOKE_OK" in result.stdout
 
 
+def test_buffered_async_emulation_smoke():
+    """End-to-end ASYNC emulation: a general `Aggregator` with `BufferedAsync(2)`
+    fires its reply handler every 2 arrivals (not on a full round barrier).
+    Runs in a fresh subprocess (a remote=True Simulation must not be built in the
+    pytest process — see test_build_simulation_emulation_mode_is_remote). This is
+    NOT FedAvgServer (which fixes `Synchronous`); it exercises the general
+    `Aggregator`/`Learner` roles directly. Timing-sensitive (manual emulation
+    driving); bump step_delay/grace if it flakes.
+
+    BufferedAsync(2) math: 4 clients each report a FIXED constant [2,2,2],
+    regardless of the model they receive (a client already at its local
+    optimum). fedavg of any 2 identical [2,2,2] vectors is [2,2,2],
+    order-independent, so the server converges to model_mean == 2.0 after its
+    first fire and stays there no matter how arrivals interleave. Because k=2
+    < N=4, the reply handler can fire more than once per driver "round" (it
+    fires on every 2 arrivals, not on a synchronized barrier), so we assert
+    fedclypse_round >= 2 (proves multiple async fires happened) rather than an
+    exact count, which would be brittle to straggler overshoot.
+    """
+    pytest.importorskip("ray")
+    script = textwrap.dedent(
+        """
+        import numpy as np
+        from eclypse.report.metrics import metric
+
+        from fedclypse.core import ArrayModel, Parameters
+        from fedclypse.schemes import Aggregator, Learner
+        from fedclypse.synchronization import BufferedAsync
+        from fedclypse.runtime import build_simulation, round_metric, run_federation
+        from fedclypse.deployment import star
+
+
+        @metric.service(remote=True, name="model_mean")
+        def model_mean(service):
+            model = getattr(service, "model", None)
+            if model is None:
+                return None
+            tensors = model.get_parameters().tensors
+            return float(np.mean(np.concatenate([t.ravel() for t in tensors])))
+
+
+        class ConstantClient(Learner):
+            CONST = 2.0
+
+            def local_update(self, params):
+                return Parameters([np.full_like(t, self.CONST) for t in params.tensors])
+
+
+        server = Aggregator(
+            "server",
+            model_factory=lambda: ArrayModel(Parameters([np.zeros(3)])),
+            rounds=3,
+            synchronizer=BufferedAsync(2),
+        )
+        clients = [
+            ConstantClient(
+                f"client_{i}", model_factory=lambda: ArrayModel(Parameters([np.zeros(3)]))
+            )
+            for i in range(4)
+        ]
+        app = star(server, clients)
+        sim = build_simulation(
+            app, rounds=6, mode="emulation", metrics=[round_metric, model_mean]
+        )
+        history = run_federation(sim, rounds=6, step_delay=0.5, grace=1.5)
+
+        final = history.final("model_mean", service_id="server")
+        assert final is not None, "no model_mean samples collected"
+        assert abs(final - 2.0) < 1e-6, f"expected 2.0, got {final}"
+
+        rounds_seen = history.final("fedclypse_round", service_id="server")
+        assert rounds_seen is not None and rounds_seen >= 2, (
+            f"expected >=2 fires, got {rounds_seen}"
+        )
+        assert sim.status.name == "IDLE"
+        print("ASYNC_SMOKE_OK")
+        """
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", script], capture_output=True, text=True, timeout=180
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "ASYNC_SMOKE_OK" in result.stdout
+
+
 def test_ring_emulation_smoke():
     """End-to-end: a non-star (ring) Application graph routes on the default infra.
 
