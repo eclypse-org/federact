@@ -3,7 +3,7 @@ import numpy as np
 
 from fedclypse.core import ArrayModel, Contribution, Parameters
 from fedclypse.data import ClientData, InMemorySource
-from fedclypse.fedavg import FedAvgClient, FedAvgServer
+from fedclypse.schemes import FedAvgClient, FedAvgServer
 from fedclypse.selection import select_all
 
 
