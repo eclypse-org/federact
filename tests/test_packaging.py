@@ -3,32 +3,27 @@
 from __future__ import annotations
 
 import importlib
-import pathlib
+import pkgutil
 from importlib.resources import files
 
 import pytest
 
 import fedclypse
 
-# The deliberate public API surface (concept-named modules; no generic buckets).
-CONCEPT_MODULES = [
-    "fedclypse.parameters",
-    "fedclypse.contribution",
-    "fedclypse.aggregation",
-    "fedclypse.selection",
-    "fedclypse.synchronization",
-    "fedclypse.compression",
-    "fedclypse.data",
-    "fedclypse.partition",
-    "fedclypse.model",
-    "fedclypse.entity",
-    "fedclypse.topology",
-    "fedclypse.placement",
-    "fedclypse.runtime",
-    "fedclypse.fedavg",
-    "fedclypse.metrics",
-]
-TORCH_MODULES = ["fedclypse.torch", "fedclypse.torch.model"]
+
+def _public_modules():
+    """Discover every public fedclypse module/subpackage (skipping ``_`` names)."""
+    found = []
+    # onerror ignores subpackages that fail to import (e.g. fedclypse.torch when the
+    # torch extra is absent); the torch modules are importorskip-guarded in the test body.
+    for info in pkgutil.walk_packages(
+        fedclypse.__path__, prefix="fedclypse.", onerror=lambda name: None
+    ):
+        short = info.name.rsplit(".", 1)[-1]
+        if short.startswith("_"):
+            continue
+        found.append(info.name)
+    return sorted(found)
 
 
 def test_package_has_docstring_and_version():
@@ -42,28 +37,11 @@ def test_py_typed_marker_is_packaged():
     assert (files("fedclypse") / "py.typed").is_file()
 
 
-def test_concept_module_list_matches_disk():
-    """Every top-level ``fedclypse/*.py`` module is listed in CONCEPT_MODULES."""
-    pkg_dir = pathlib.Path(fedclypse.__file__).parent
-    on_disk = {p.stem for p in pkg_dir.glob("*.py") if not p.stem.startswith("_")}
-    listed = {m.rsplit(".", 1)[-1] for m in CONCEPT_MODULES}
-    assert on_disk == listed, f"module list out of sync: {on_disk ^ listed}"
-
-
-@pytest.mark.parametrize("modname", CONCEPT_MODULES)
-def test_concept_module_documented(modname):
-    """Each concept module has a docstring, an ``__all__``, and resolvable exports."""
-    module = importlib.import_module(modname)
-    assert module.__doc__, f"{modname} missing a module docstring"
-    assert hasattr(module, "__all__"), f"{modname} missing __all__"
-    for name in module.__all__:
-        assert hasattr(module, name), f"{modname}.__all__ names undefined {name!r}"
-
-
-@pytest.mark.parametrize("modname", TORCH_MODULES)
-def test_torch_module_documented(modname):
-    """Each torch-subpackage module (torch extra) is documented the same way."""
-    pytest.importorskip("torch")
+@pytest.mark.parametrize("modname", _public_modules())
+def test_module_documented(modname):
+    """Every public module/subpackage has a docstring, an ``__all__``, and resolvable exports."""
+    if modname.startswith("fedclypse.torch"):
+        pytest.importorskip("torch")
     module = importlib.import_module(modname)
     assert module.__doc__, f"{modname} missing a module docstring"
     assert hasattr(module, "__all__"), f"{modname} missing __all__"
