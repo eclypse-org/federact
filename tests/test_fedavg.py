@@ -3,7 +3,7 @@ import numpy as np
 
 from fedclypse.core import ArrayModel, Contribution, Parameters
 from fedclypse.data import ClientData, InMemorySource
-from fedclypse.schemes import FedAvgClient, FedAvgServer
+from fedclypse.schemes import Aggregator, FedAvgClient, FedAvgServer, Learner
 from fedclypse.selection import select_all
 
 
@@ -50,3 +50,13 @@ def test_fedavg_client_num_examples_reflects_dataset_size():
     assert client.num_examples == 1.0  # no dataset materialized before deploy
     client.on_deploy()
     assert client.num_examples == 3.0
+
+
+def test_fedavg_server_is_an_aggregator():
+    assert issubclass(FedAvgServer, Aggregator)
+    assert isinstance(_server(), Aggregator)
+
+
+def test_fedavg_client_is_a_learner():
+    assert issubclass(FedAvgClient, Learner)
+    assert isinstance(FedAvgClient("client_0"), Learner)
