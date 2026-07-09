@@ -136,3 +136,7 @@ dmypy.json
 # iCloud sync-conflict duplicates (e.g. "entity 2.py", "test_runtime 3.py")
 * [0-9].py
 * [0-9].*
+
+# Local-only: design/plan docs + Claude Code instructions (never pushed to origin)
+/CLAUDE.md
+docs/superpowers/
