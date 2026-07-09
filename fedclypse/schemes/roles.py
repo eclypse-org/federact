@@ -8,6 +8,13 @@ Aggregator additionally runs a proactive driver. A star server is an
 ``Aggregator``; a client a ``Learner``; a hierarchical mid-node is both -- the
 two loops run concurrently on the entity's single asyncio event loop, sharing
 ``self.model`` cooperatively.
+
+On a both-roles node the two loops also share a single ``self.round`` (written
+by both handlers), and the current design propagates values **upward** only: a
+mid-node reports its aggregate to its parent but does not forward the parent's
+model down to its children within a round. Two-way hierarchical aggregation and
+staleness-weighted async on a both-roles node need per-role ``model``/``round``
+separation and are deferred to a later roadmap item.
 """
 from __future__ import annotations
 
