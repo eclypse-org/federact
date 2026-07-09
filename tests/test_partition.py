@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-from fedclypse.partition import Dirichlet, IID, NaturalId, Pathological, QuantitySkew
+from fedclypse.data import Dirichlet, IID, NaturalId, Pathological, QuantitySkew
 
 
 def _covers_all(index_map, n):

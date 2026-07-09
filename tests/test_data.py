@@ -40,7 +40,7 @@ def test_split_maps_partitioner_output_to_client_data():
 
 
 def test_split_with_dirichlet_produces_disjoint_materializable_shards():
-    from fedclypse.partition import Dirichlet
+    from fedclypse.data import Dirichlet
 
     data = list(range(20))
     labels = [i % 4 for i in range(20)]
