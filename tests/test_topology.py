@@ -2,7 +2,7 @@
 import networkx as nx
 
 from fedclypse.core import Entity
-from fedclypse.topology import complete, from_graph, ring, star
+from fedclypse.deployment import complete, from_graph, ring, star
 
 
 def _entities(n):

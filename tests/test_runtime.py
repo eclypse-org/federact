@@ -7,7 +7,7 @@ import pytest
 
 from fedclypse.core import Entity
 from fedclypse.runtime import build_simulation
-from fedclypse.topology import star
+from fedclypse.deployment import star
 
 
 def _entities(n):
@@ -35,7 +35,7 @@ def test_build_simulation_emulation_mode_is_remote():
     script = (
         "from fedclypse.core import Entity\n"
         "from fedclypse.runtime import build_simulation\n"
-        "from fedclypse.topology import star\n"
+        "from fedclypse.deployment import star\n"
         "server = Entity('server')\n"
         "clients = [Entity('client_0'), Entity('client_1')]\n"
         "app = star(server, clients)\n"
@@ -87,7 +87,7 @@ def test_run_federation_drives_start_steps_stop(monkeypatch):
 def test_build_simulation_accepts_explicit_placement():
     from eclypse.placement.strategies import RoundRobinStrategy
 
-    from fedclypse.topology import star
+    from fedclypse.deployment import star
 
     server = Entity("server")
     clients = [Entity("client_0"), Entity("client_1")]
@@ -102,7 +102,7 @@ def test_build_simulation_accepts_explicit_placement():
 def test_build_simulation_rejects_asymmetric_infrastructure():
     from eclypse.builders.infrastructure import get_star
 
-    from fedclypse.topology import star
+    from fedclypse.deployment import star
 
     server = Entity("server")
     clients = [Entity("client_0")]
@@ -133,7 +133,7 @@ def test_fedavg_emulation_smoke():
         from fedclypse.schemes import FedAvgClient, FedAvgServer
         from fedclypse.metrics import round_metric
         from fedclypse.runtime import build_simulation, run_federation
-        from fedclypse.topology import star
+        from fedclypse.deployment import star
 
 
         @metric.service(remote=True, name="model_mean")
@@ -201,7 +201,7 @@ def test_ring_emulation_smoke():
 
         from fedclypse.core import Entity
         from fedclypse.runtime import build_simulation, run_federation
-        from fedclypse.topology import ring
+        from fedclypse.deployment import ring
 
         ROUNDS = 2
 
