@@ -4,10 +4,10 @@
 Each builder returns an eclypse ``Application`` whose edges are the FL communication
 graph — who exchanges with whom. ``get_neighbors`` follows this graph, so it is the
 sole determinant of comm topology; the physical infrastructure is decoupled
-(see ``fedclypse.placement``). ``from_graph`` is the general primitive; ``star``,
+(see ``fedclypse.deployment.placement``). ``from_graph`` is the general primitive; ``star``,
 ``ring`` and ``complete`` are thin conveniences over it. Hierarchical, random and
 realistic topologies are obtained by passing the corresponding ``networkx`` graph to
-``from_graph``, or by mirroring an eclypse infrastructure (``fedclypse.placement.mirror``).
+``from_graph``, or by mirroring an eclypse infrastructure (``fedclypse.deployment.placement.mirror``).
 """
 from __future__ import annotations
 

@@ -131,8 +131,7 @@ def test_fedavg_emulation_smoke():
 
         from fedclypse.core import ArrayModel, Parameters
         from fedclypse.schemes import FedAvgClient, FedAvgServer
-        from fedclypse.metrics import round_metric
-        from fedclypse.runtime import build_simulation, run_federation
+        from fedclypse.runtime import build_simulation, round_metric, run_federation
         from fedclypse.deployment import star
 
 

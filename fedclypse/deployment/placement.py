@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Physical placement: mapping entities onto infrastructure nodes.
 
-The communication topology (``fedclypse.topology``) and the physical placement are
+The communication topology (``fedclypse.deployment.topology``) and the physical placement are
 independent. This module reuses eclypse's ``PlacementStrategy`` suite directly
 (``StaticStrategy``, ``RoundRobinStrategy``, ``RandomStrategy``, ``FirstFitStrategy``,
 ``BestFitStrategy``) and adds only the conveniences the deployment spectrum needs:

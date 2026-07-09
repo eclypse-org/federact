@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import pandas as pd
 
-from fedclypse.metrics import History
+from fedclypse.runtime import History
 
 
 def _frame(rows):

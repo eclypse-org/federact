@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Runtime assembly and driving: wire fedclypse entities into an eclypse Simulation.
 
-This module turns an Application (e.g. from ``fedclypse.topology``) into a runnable
-eclypse experiment: ``build_simulation`` wires it to an infrastructure and a
+This module turns an Application (e.g. from ``fedclypse.deployment.topology``) into a
+runnable eclypse experiment: ``build_simulation`` wires it to an infrastructure and a
 ``SimulationConfig`` (without running it), and ``run_federation`` drives a built
 simulation through an emulation to completion, returning the collected metric
 ``History``.
@@ -19,7 +19,7 @@ from eclypse.simulation import Simulation, SimulationConfig
 if TYPE_CHECKING:
     # Only for the ``run_federation`` return-type annotation; the real,
     # non-circular import happens inside that function's body (see below).
-    from fedclypse.metrics import History
+    from fedclypse.runtime.metrics import History
 
 __all__ = ["build_simulation", "run_federation"]
 
@@ -72,7 +72,7 @@ def build_simulation(
 
     Args:
         application (Application): The eclypse Application to run (e.g. from
-            ``fedclypse.topology.star``).
+            ``fedclypse.deployment.star``).
         infrastructure (Optional[Infrastructure]): The infrastructure graph to
             place ``application`` on. Defaults to ``None``, which builds a
             star sized to ``n_clients`` (or ``len(application.nodes) - 1``
@@ -161,7 +161,7 @@ def run_federation(
     """
     import time
 
-    from fedclypse.metrics import History
+    from fedclypse.runtime.metrics import History
 
     simulation.start()
     for _ in range(rounds):

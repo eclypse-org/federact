@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """fedclypse: Federated Learning as a verticalization of the eclypse simulator.
 
-Public API lives in concept-named modules — e.g. ``fedclypse.parameters``,
-``fedclypse.aggregation``, ``fedclypse.entity`` — imported directly from their
-namespaces. See the individual modules for details.
+Public API is organized into concept subpackages — e.g. ``fedclypse.core``,
+``fedclypse.aggregation``, ``fedclypse.schemes``, ``fedclypse.deployment``,
+``fedclypse.data``, ``fedclypse.runtime`` — imported from their namespaces. See the
+individual subpackages for details.
 """
 
 __version__ = "0.1.0"
