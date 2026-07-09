@@ -326,3 +326,139 @@ def test_ring_emulation_smoke():
     )
     assert result.returncode == 0, result.stdout + result.stderr
     assert "RING_SMOKE_OK" in result.stdout
+
+
+def test_hierarchical_emulation_smoke():
+    """End-to-end HIERARCHICAL emulation: a both-roles mid-node cleanly separates
+    a parent's `request` from a child's `reply` on ONE shared receive queue, and
+    a leaf value propagates two tiers up to the root. Runs in a fresh subprocess
+    (a remote=True Simulation must not be built in the pytest process — see
+    test_build_simulation_emulation_mode_is_remote). This is the live proof of
+    the both-roles dispatch — the riskiest mechanic in the role architecture,
+    validated by the Task-1 spike. Timing-sensitive (manual emulation driving);
+    bump step_delay/grace if it flakes.
+
+    Topology (`networkx.balanced_tree(2, 2)`, wired via `from_graph`, which
+    places `entities[i]` at graph node `i`): root(0) -> mid_0(1), mid_1(2);
+    mid_0 -> leaf_0(3), leaf_1(4); mid_1 -> leaf_2(5), leaf_3(6). Leaves are
+    plain `Learner`s that report a FIXED constant [5,5,5], ignoring the model
+    they receive. Each `mid_*` is a `HierMid(Aggregator, Learner)` — both roles
+    at once, on ONE shared receive queue: an inbound `request` (from its
+    parent) is routed by `kind` to its Learner half, an inbound `reply` (from
+    one of its two children) to its Aggregator half — no message stealing
+    (verified by the spike's Q3). The root is a plain `Aggregator` over its two
+    mids.
+
+    Math: each mid aggregates its 2 leaves -> mean(5,5) = 5; the root
+    aggregates its 2 mids -> mean(5,5) = 5. The root starts at [0,0,0], so
+    reaching 5.0 proves the leaf constant propagated UP through the both-roles
+    mid tier, not merely that the root's own machinery ran.
+
+    Two constraints are load-bearing (both required by the spike, both
+    exercised here):
+    - `SelectChildren` is a picklable, class-based (NOT lambda/closure) cohort
+      selection that restricts a mid's Aggregator cohort to its known
+      children. `get_neighbors` returns the UNDIRECTED neighbourhood, which
+      for a mid includes its PARENT; the default `select_all` would put the
+      parent in a `Synchronous` mid's cohort, and the parent (an Aggregator
+      that never replies to a `request`) would never contribute a reply ->
+      permanent deadlock.
+    - `HierMid.local_update` returns `self.model.get_parameters()` — on a
+      parent request it reports the mid's current AGGREGATED state upward,
+      rather than adopting the parent's downward model (the `Learner`
+      default's identity `local_update`). The two role loops share one
+      `self.model`; adopting the root's [0,0,0] would clobber the
+      leaf-aggregate before it could propagate, and the root would never see
+      anything but zeros.
+    """
+    pytest.importorskip("ray")
+    script = textwrap.dedent(
+        """
+        import numpy as np
+        import networkx as nx
+        from eclypse.report.metrics import metric
+
+        from fedclypse.core import ArrayModel, Parameters
+        from fedclypse.schemes import Aggregator, Learner
+        from fedclypse.synchronization import Synchronous
+        from fedclypse.runtime import build_simulation, round_metric, run_federation
+        from fedclypse.deployment import from_graph
+
+
+        @metric.service(remote=True, name="model_mean")
+        def model_mean(service):
+            model = getattr(service, "model", None)
+            if model is None:
+                return None
+            tensors = model.get_parameters().tensors
+            return float(np.mean(np.concatenate([t.ravel() for t in tensors])))
+
+
+        LEAF_CONST = 5.0
+
+
+        class ConstantLeaf(Learner):
+            def local_update(self, params):
+                return Parameters([np.full_like(t, LEAF_CONST) for t in params.tensors])
+
+
+        class SelectChildren:
+            # picklable child-only cohort selection (excludes the parent neighbour)
+            def __init__(self, children):
+                self.children = set(children)
+
+            def __call__(self, neighbours):
+                return [n for n in neighbours if n in self.children]
+
+
+        class HierMid(Aggregator, Learner):
+            # both-roles mid: aggregates its leaves AND reports upward to its parent
+            def __init__(self, entity_id, *, children, rounds, **kwargs):
+                super().__init__(
+                    entity_id, rounds=rounds, selection=SelectChildren(children), **kwargs
+                )
+
+            def local_update(self, params):
+                return self.model.get_parameters()
+
+
+        factory = lambda: ArrayModel(Parameters([np.zeros(3)]))
+        root = Aggregator(
+            "root", model_factory=factory, rounds=4, synchronizer=Synchronous()
+        )
+        mid_0 = HierMid(
+            "mid_0",
+            children=["leaf_0", "leaf_1"],
+            rounds=2,
+            model_factory=factory,
+            synchronizer=Synchronous(),
+        )
+        mid_1 = HierMid(
+            "mid_1",
+            children=["leaf_2", "leaf_3"],
+            rounds=2,
+            model_factory=factory,
+            synchronizer=Synchronous(),
+        )
+        leaves = [ConstantLeaf(f"leaf_{i}", model_factory=factory) for i in range(4)]
+
+        # balanced_tree(2,2): 0=root,1=mid_0,2=mid_1,3=leaf_0,4=leaf_1,5=leaf_2,6=leaf_3
+        entities = [root, mid_0, mid_1, leaves[0], leaves[1], leaves[2], leaves[3]]
+        app = from_graph(entities, nx.balanced_tree(2, 2))
+        sim = build_simulation(
+            app, rounds=8, mode="emulation", metrics=[round_metric, model_mean]
+        )
+        history = run_federation(sim, rounds=8, step_delay=0.5, grace=2.5)
+
+        final = history.final("model_mean", service_id="root")
+        assert final is not None, "no root model_mean samples"
+        assert abs(final - 5.0) < 1e-6, f"expected 5.0, got {final}"
+        assert sim.status.name == "IDLE"
+        print("HIER_SMOKE_OK")
+        """
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", script], capture_output=True, text=True, timeout=180
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "HIER_SMOKE_OK" in result.stdout
