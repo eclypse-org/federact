@@ -14,8 +14,7 @@ import fedclypse
 def _public_modules():
     """Discover every public fedclypse module/subpackage (skipping ``_`` names)."""
     found = []
-    # onerror ignores subpackages that fail to import (e.g. fedclypse.torch when the
-    # torch extra is absent); the torch modules are importorskip-guarded in the test body.
+    # onerror keeps discovery robust if a subpackage ever fails to import.
     for info in pkgutil.walk_packages(
         fedclypse.__path__, prefix="fedclypse.", onerror=lambda name: None
     ):
@@ -40,8 +39,6 @@ def test_py_typed_marker_is_packaged():
 @pytest.mark.parametrize("modname", _public_modules())
 def test_module_documented(modname):
     """Every public module/subpackage has a docstring, an ``__all__``, and resolvable exports."""
-    if modname.startswith("fedclypse.torch"):
-        pytest.importorskip("torch")
     module = importlib.import_module(modname)
     assert module.__doc__, f"{modname} missing a module docstring"
     assert hasattr(module, "__all__"), f"{modname} missing __all__"

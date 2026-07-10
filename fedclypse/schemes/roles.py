@@ -107,8 +107,9 @@ class Learner(Roles):
     def local_update(self, params: Parameters) -> Parameters:
         """Run the local training step (identity by default; override to train).
 
-        This is the client-optimizer (ClientOpt) seam; concrete client
-        optimizers (e.g. torch local training) are a later specialization.
+        This is the client-optimizer (ClientOpt) seam: override it to run real
+        local training with the deep-learning framework of your choice (the core
+        stays framework-agnostic).
 
         Args:
             params (Parameters): The parameters received from the requester.
