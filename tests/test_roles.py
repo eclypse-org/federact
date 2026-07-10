@@ -3,6 +3,7 @@ import numpy as np
 
 from fedclypse.aggregation import fedavg
 from fedclypse.core import ArrayModel, Contribution, Parameters
+from fedclypse.optimization import ServerSGD
 from fedclypse.schemes import Aggregator, Learner, Roles
 from fedclypse.selection import select_all
 from fedclypse.synchronization import Asynchronous, BufferedAsync, Synchronous
@@ -128,3 +129,37 @@ def test_aggregator_accepts_custom_mechanics():
     )
     assert agg.synchronizer is custom_sync
     assert agg.selection(["x", "y"]) == ["x"]
+
+
+# ---- (e) server_opt seam ----
+
+
+def test_aggregator_default_server_opt_is_serversgd_one():
+    agg = Aggregator("agg", rounds=1)
+    assert isinstance(agg.server_opt, ServerSGD)
+    assert agg.server_opt.lr == 1.0
+
+
+def test_aggregator_instances_get_distinct_server_opt():
+    a = Aggregator("a", rounds=1)
+    b = Aggregator("b", rounds=1)
+    assert a.server_opt is not b.server_opt  # sentinel default, not a shared instance
+
+
+def test_aggregator_default_server_opt_reproduces_the_aggregate():
+    # The fire-path math: server_opt.step(current, aggregate - current) == aggregate
+    # under the default ServerSGD(1.0). (Exercised via public pieces; the wired
+    # async fire path is proven by the emulation smoke.)
+    agg = Aggregator("agg", rounds=1)
+    agg.model = ArrayModel(_p([0.0]))
+    current = agg.model.get_parameters()
+    aggregate = _p([4.0])
+    delta = aggregate.add(current.scale(-1.0))
+    assert np.allclose(agg.server_opt.step(current, delta).tensors[0], [4.0])
+
+
+def test_aggregator_custom_server_opt_changes_the_step():
+    agg = Aggregator("agg", rounds=1, server_opt=ServerSGD(lr=0.5))
+    current = _p([0.0])
+    delta = _p([4.0]).add(current.scale(-1.0))  # aggregate 4 - current 0 = 4
+    assert np.allclose(agg.server_opt.step(current, delta).tensors[0], [2.0])

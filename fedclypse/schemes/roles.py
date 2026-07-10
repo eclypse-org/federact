@@ -25,6 +25,7 @@ from fedclypse.aggregation import fedavg
 from fedclypse.core.contribution import Contribution
 from fedclypse.core.entity import Entity
 from fedclypse.core.parameters import Parameters
+from fedclypse.optimization import ServerOpt, ServerSGD
 from fedclypse.selection import select_all
 from fedclypse.synchronization import Synchronizer, Synchronous
 
@@ -106,6 +107,9 @@ class Learner(Roles):
     def local_update(self, params: Parameters) -> Parameters:
         """Run the local training step (identity by default; override to train).
 
+        This is the client-optimizer (ClientOpt) seam; concrete client
+        optimizers (e.g. torch local training) are a later specialization.
+
         Args:
             params (Parameters): The parameters received from the requester.
 
@@ -156,7 +160,9 @@ class Aggregator(Roles):
     (before the next message is dispatched) and pushes a fire token onto a
     Queue. Using a Queue (not an Event) means concurrent fires can never
     coalesce -- essential for ``BufferedAsync``, where a single kickoff can
-    trigger several fires before the driver wakes.
+    trigger several fires before the driver wakes. ``server_opt`` (default
+    ``ServerSGD(1.0)`` = FedAvg) is applied to the aggregated pseudo-gradient
+    ``aggregate - current`` each fire.
     """
 
     def __init__(
@@ -167,6 +173,7 @@ class Aggregator(Roles):
         selection: Callable[[List[str]], List[str]] = select_all,
         synchronizer: Optional[Synchronizer] = None,
         rule: Callable[[List[Contribution]], Parameters] = fedavg,
+        server_opt: Optional[ServerOpt] = None,
         **kwargs: Any,
     ) -> None:
         """Initialize the aggregator with its round budget and composed mechanics.
@@ -184,6 +191,13 @@ class Aggregator(Roles):
                 Defaults to ``Synchronous()``.
             rule (Callable[[List[Contribution]], Parameters]): The aggregation
                 rule. Defaults to ``fedavg``.
+            server_opt (Optional[ServerOpt]): The server-side optimizer applied
+                to the aggregated pseudo-gradient (``aggregate - current``) each
+                fire. Defaults to ``ServerSGD(1.0)``, which reproduces FedAvg
+                (``params + (aggregate - params) = aggregate``). A fresh
+                instance is created per aggregator (never a shared mutable
+                default), so stateful optimizers do not leak state between
+                entities.
             **kwargs (Any): Forwarded to ``Entity``/``Roles`` (and, for a
                 both-roles entity, on to ``Learner``).
         """
@@ -192,6 +206,7 @@ class Aggregator(Roles):
         self.selection = selection
         self.synchronizer = synchronizer or Synchronous()
         self.rule = rule
+        self.server_opt = server_opt or ServerSGD(1.0)
         self._buffer: List[Contribution] = []
         self._cohort: List[str] = []
         self._fires: Optional[asyncio.Queue] = None
@@ -278,7 +293,9 @@ class Aggregator(Roles):
             if self.synchronizer.ready(self._buffer, self._cohort):
                 batch = self._buffer
                 self._buffer = []  # re-arm BEFORE the next message is dispatched
-                self.model.set_parameters(self.aggregate(batch))
+                current = self.model.get_parameters()
+                delta = self.aggregate(batch).add(current.scale(-1.0))
+                self.model.set_parameters(self.server_opt.step(current, delta))
                 self.round += 1
                 self._fires.put_nowait([c.source for c in batch])
             return None
