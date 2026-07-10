@@ -462,3 +462,78 @@ def test_hierarchical_emulation_smoke():
     )
     assert result.returncode == 0, result.stdout + result.stderr
     assert "HIER_SMOKE_OK" in result.stdout
+
+
+def test_server_optimizer_emulation_smoke():
+    """End-to-end: a stateful ServerOpt (ServerAdagrad) accumulates state ACROSS
+    fires on the worker and converges the global model. Runs in a fresh subprocess
+    (a remote=True Simulation must not be built in the pytest process). This is the
+    live proof that ServerOpt state persists across the async role loop; it replaces
+    an empirical spike for item 4. Timing-sensitive; bump step_delay/grace if it flakes.
+
+    Setup: 2 clients pinned at a constant [4,4,4]; server = general Aggregator with
+    server_opt=ServerAdagrad(lr=1, eps=0), rounds=2, starting at [0,0,0].
+    Math (delta = aggregate - current):
+      fire 1: delta=4, v = 0 + 16 = 16, step = 4/sqrt(16) = 1     -> model = 1
+      fire 2: delta=3, v = 16 + 9 = 25, step = 3/sqrt(25) = 0.6   -> model = 1.6
+    The v=25 in fire 2 REQUIRES the accumulator to have persisted from fire 1; had it
+    reset, fire 2 would give v=9, step=1, model=2.0. So model_mean == 1.6 is the exact
+    state-persistence proof.
+    """
+    pytest.importorskip("ray")
+    script = textwrap.dedent(
+        """
+        import numpy as np
+        from eclypse.report.metrics import metric
+
+        from fedclypse.core import ArrayModel, Parameters
+        from fedclypse.schemes import Aggregator, Learner
+        from fedclypse.optimization import ServerAdagrad
+        from fedclypse.runtime import build_simulation, round_metric, run_federation
+        from fedclypse.deployment import star
+
+
+        @metric.service(remote=True, name="model_mean")
+        def model_mean(service):
+            model = getattr(service, "model", None)
+            if model is None:
+                return None
+            tensors = model.get_parameters().tensors
+            return float(np.mean(np.concatenate([t.ravel() for t in tensors])))
+
+
+        class ConstantClient(Learner):
+            def local_update(self, params):
+                return Parameters([np.full_like(t, 4.0) for t in params.tensors])
+
+
+        server = Aggregator(
+            "server",
+            model_factory=lambda: ArrayModel(Parameters([np.zeros(3)])),
+            rounds=2,
+            server_opt=ServerAdagrad(lr=1.0, eps=0.0),
+        )
+        clients = [
+            ConstantClient(
+                f"client_{i}", model_factory=lambda: ArrayModel(Parameters([np.zeros(3)]))
+            )
+            for i in range(2)
+        ]
+        app = star(server, clients)
+        sim = build_simulation(
+            app, rounds=2, mode="emulation", metrics=[round_metric, model_mean]
+        )
+        history = run_federation(sim, rounds=2, step_delay=0.5, grace=1.5)
+
+        final = history.final("model_mean", service_id="server")
+        assert final is not None, "no model_mean samples collected"
+        assert abs(final - 1.6) < 1e-6, f"expected 1.6 (state persisted), got {final}"
+        assert sim.status.name == "IDLE"
+        print("SERVEROPT_SMOKE_OK")
+        """
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", script], capture_output=True, text=True, timeout=180
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "SERVEROPT_SMOKE_OK" in result.stdout
