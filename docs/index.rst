@@ -1,68 +1,36 @@
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 6
    :hidden:
 
-   Getting Started <self>
+   Overview <source/overview/index.rst>
+   Reference <source/api/index.rst>
+   Changelog <https://github.com/eclypse-org/fedclypse/blob/main/CHANGELOG.md>
 
-=========
-fedclypse
-=========
-
-Welcome to the `fedclypse <https://github.com/eclypse-org/fedclypse>`_ documentation!
+=======================
+fedclypse documentation
+=======================
 
 **fedclypse** is Federated Learning as a framework-agnostic verticalization of
-`eclypse <https://github.com/eclypse-org/eclypse>`_. It turns an eclypse ``Simulation``
-into a federation: FL participants are eclypse ``Service`` entities, the FL round is
-composable mechanics layered on top of eclypse's message passing, and a run is driven
-and observed the same way any eclypse experiment is.
+`ECLYPSE <https://github.com/eclypse-org/eclypse>`_. It turns an eclypse
+``Simulation`` into a federation: FL participants are eclypse ``Service`` entities,
+the FL round is composable mechanics layered on top of eclypse's message passing,
+and a run is driven and observed the same way any eclypse experiment is.
 
-fedclypse is a research project and is still under active development.
+The exchange currency is plain numpy, so the base install trains real models with
+nothing but numpy. The FL round factorizes into orthogonal axes you mix and match:
 
-Why fedclypse?
-==============
+- **selection** -- which neighbours participate in a round;
+- **synchronization** -- when a round fires and how staleness is weighted;
+- **aggregation** -- how contributions combine;
+- **compression** -- what crosses the wire;
+- **optimization** -- how the aggregated update is applied.
 
-* **Framework-agnostic core.** The exchange currency (``fedclypse.core.Parameters``) is
-  plain numpy arrays, so the base install trains real models with nothing but numpy.
-  Bring your own deep-learning framework by subclassing ``fedclypse.core.Model`` and
-  overriding ``Learner.local_update``.
-* **Composable, orthogonal mechanics.** Selection, synchronization, aggregation,
-  compression, and optimization are independent axes you mix and match rather than
-  picking a monolithic "algorithm".
-* **Two roles, composed freely.** ``Aggregator`` and ``Learner`` are mixins over a
-  situated ``Entity``: a star server is an ``Aggregator``, a client a ``Learner``, and a
-  hierarchical mid-node is both at once.
-* **An experiment layer.** A ``Situation`` and a ``Behaviour`` are independent values
-  joined by a single pure function, ``run(situation, behaviour, rounds=...)``.
+.. button-ref:: source/overview/index
+   :ref-type: myst
+   :outline:
+   :color: secondary
+   :expand:
+   :align: center
+   :shadow:
 
-.. _getting-started:
-
-Getting Started
-===============
-
-fedclypse requires Python >= 3.11.
-
-.. code-block:: console
-
-   $ pip install -e .                     # core (numpy-only)
-   $ pip install -e ".[emulation]"         # + Ray, needed to actually run a federation
-   $ pip install -e ".[dev]"               # + pytest/black/ruff, for development
-
-The canonical one-liner assembles a client-server star ``Situation`` and the reference
-``FedAvg`` ``Behaviour``, then runs it:
-
-.. code-block:: python
-
-   import numpy as np
-
-   from fedclypse.core import ArrayModel, Parameters
-   from fedclypse.experiment import fedavg_behaviour, run, star_situation
-
-   model_factory = lambda: ArrayModel(Parameters([np.zeros(3)]))
-   situation = star_situation(
-       "server", ["client_0", "client_1"], model_factory=model_factory
-   )
-   history = run(situation, fedavg_behaviour(), rounds=5)
-
-For a complete, runnable demo that actually trains something — a numpy
-logistic-regression classifier federated across four clients with FedAvg — see
-``examples/fedavg_numpy.py`` in the repository.
+   :octicon:`play;1em;info` Start using fedclypse

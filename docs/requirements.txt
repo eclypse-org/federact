@@ -1,7 +1,0 @@
-ray[tune]
-numpy
-networkx
-sphinx
-sphinx-copybutton
-sphinx-book-theme
-Jinja2<3.1

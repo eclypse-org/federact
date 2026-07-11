@@ -1,9 +1,6 @@
 # Minimal makefile for Sphinx documentation
-#
 
-# You can set these variables from the command line, and also
-# from the environment for the first two.
-SPHINXOPTS    ?=
+SPHINXOPTS    ?= -j auto  # -W dropped: fedclypse dataclasses emit benign duplicate-attribute warnings
 SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = .
 BUILDDIR      = _build
@@ -12,9 +9,25 @@ BUILDDIR      = _build
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-.PHONY: help Makefile
+clean:
+	rm -rf "$(BUILDDIR)"
+	rm -rf source/api/reference
 
-# Catch-all target: route all unknown targets to Sphinx using the new
-# "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
+livehtml:
+	sphinx-autobuild "$(SOURCEDIR)" "$(BUILDDIR)"/html $(SPHINXOPTS) $(O)
+
+open:
+	open "$(BUILDDIR)"/html/index.html
+
+check:
+	ruff check --select D,E501 ../fedclypse
+
+format:
+	docformatter --in-place --recursive --wrap-summaries 88 --wrap-descriptions 88 ../fedclypse
+
+.PHONY: help clean livehtml open check format Makefile
+
+# Catch-all target: route all unknown targets to Sphinx using make mode.
+# $(O) is meant as a shortcut for extra Sphinx options.
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
