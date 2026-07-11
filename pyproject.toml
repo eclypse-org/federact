@@ -103,6 +103,11 @@ skip = ["__init__.py"]
 
 [tool.mypy]
 python_version = "3.11"
+# Resolve fedclypse as the package root explicitly, so `mypy fedclypse` works even
+# when the repo lives under a path an implicit walk-up can't treat as a package
+# (e.g. a directory name containing characters invalid in a module name).
+explicit_package_bases = true
+mypy_path = "."
 
 [[tool.mypy.overrides]]
 module = [

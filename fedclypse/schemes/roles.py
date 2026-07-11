@@ -319,6 +319,7 @@ class Aggregator(Roles):
                 delta = self.aggregate(batch).add(current.scale(-1.0))
                 self.model.set_parameters(self.server_opt.step(current, delta))
                 self.round += 1
+                assert self._fires is not None  # created by the driver's kickoff
                 self._fires.put_nowait([c.source for c in batch])
             return None
         return await super()._handle(kind, message)

@@ -181,6 +181,7 @@ class _AdamFamily(ServerOpt):
         if self._m is None:
             self._m = [np.zeros_like(t) for t in params.tensors]
             self._v = [np.zeros_like(t) for t in params.tensors]
+        assert self._v is not None  # always initialized together with self._m
         self._t += 1
         out = []
         for i, (p, d) in enumerate(zip(params.tensors, delta.tensors, strict=False)):
