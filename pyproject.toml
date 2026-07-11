@@ -1,44 +1,149 @@
-[build-system]
-requires = ["setuptools>=61"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "fedclypse"
 version = "0.1.0"
-description = "A research framework for Federated Learning, a verticalization of eclypse"
-readme = "README.rst"
+description = "A framework-agnostic verticalization of ECLYPSE for Federated Learning"
+readme = "README.md"
 requires-python = ">=3.11,<3.14"
-authors = [{ name = "Valerio De Caro" }]
-license = { text = "MIT" }
-dependencies = ["numpy>=1.24", "networkx>=3", "eclypse>=0.9,<0.10"]
+license-files = ["LICENSE"]
 
-[project.optional-dependencies]
-dev = ["pytest>=8", "black>=24", "ruff>=0.5"]
-emulation = ["ray>=2.5"]
+authors = [
+    { name = "Valerio De Caro", email = "valerio.decaro@di.unipi.it" },
+]
 
-[tool.setuptools.packages.find]
-include = ["fedclypse*"]
+maintainers = [
+    { name = "Valerio De Caro", email = "valerio.decaro@di.unipi.it" },
+]
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-# Ignore iCloud sync-conflict duplicate files (e.g. "test_runtime 2.py") so they
-# are never collected/run twice.
-addopts = "--ignore-glob='* [0-9].py'"
+dependencies = [
+    "eclypse>=0.9.0,<0.10.0",
+    "numpy>=1.24,<3.0.0",
+    "networkx>=3.6.1,<4.0.0",
+]
 
-[tool.setuptools.package-data]
-fedclypse = ["py.typed"]
+[project.urls]
+Homepage = "https://github.com/eclypse-org/fedclypse"
+Repository = "https://github.com/eclypse-org/fedclypse"
 
-[tool.ruff.lint]
-select = ["D", "F"]        # D = pydocstyle (docstrings); F = pyflakes (undefined/unused)
-ignore = ["D105"]          # magic-method docstrings (__len__, __getitem__, …) not required
 
-[tool.ruff.lint.pydocstyle]
-convention = "google"
+# Dependency Groups
+[dependency-groups]
+dev = [
+    "commitizen>=4.13.10,<5.0.0",
+    "pre-commit>=4.6.0,<5.0.0",
+    "mypy>=1.20.2,<2.0.0",
+    "isort>=8.0.1,<9.0.0",
+    "ruff>=0.15.11,<0.16.0",
+]
 
-[tool.ruff.lint.per-file-ignores]
-"tests/**" = ["D"]         # tests need names + assertions, not full docstrings
+deploy = ["twine>=6.2.0,<7.0.0"]
+
+test = [
+    "pytest>=9.0.3,<10.0.0",
+    "pytest-asyncio>=1.3.0,<2.0.0",
+    "pytest-cov>=7.1.0,<8.0.0",
+    "pytest-xdist>=3.8.0,<4.0.0",
+    # Plain ray (not ray[default]): fedclypse's emulation uses ray core only. The
+    # ray[default] dashboard agent fails to start with the latest resolved dashboard
+    # deps on macOS (raylet times out in WaitForDashboardAgentPorts), and fedclypse
+    # never needs the dashboard.
+    "ray>=2.55.1,<3.0.0",
+]
+
+docs = [
+    "myst-parser>=5.0.0,<6.0.0",
+    "sphinx-copybutton>=0.5.2,<0.6.0",
+    "jinja2>=3.1.6,<4.0.0",
+    "docformatter[tomli]>=1.7.7,<2.0.0",
+    "sphinx-autobuild>=2025.8.25,<2026.0.0",
+    "sphinx-favicon>=1.1.0,<2.0.0",
+    "sphinx-design>=0.7.0,<0.8.0",
+    "sphinx-icon>=0.2.2,<0.3.0",
+    "pydata-sphinx-theme>=0.17.1,<0.18.0",
+    "sphinx>=9.0.4",
+]
+
+# Build backend
+[build-system]
+requires = ["uv_build>=0.11.8,<0.12"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-root = "."
+module-name = "fedclypse"
+
+[[tool.uv.index]]
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+publish-url = "https://test.pypi.org/legacy/"
+explicit = true
+
+
+# -------------------------
+# Third-party tool settings
+# -------------------------
 
 [tool.commitizen]
 name = "cz_conventional_commits"
 version = "0.1.0"
 tag_format = "$version"
+version_files = [
+    "pyproject.toml:^version",
+    "fedclypse/__init__.py:__version__",
+    "CITATION.cff:version",
+]
+
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 2
+filter_files = true
+skip = ["__init__.py"]
+
+[tool.mypy]
+python_version = "3.11"
+
+[[tool.mypy.overrides]]
+module = [
+    "ray",
+    "ray.*",
+    "eclypse",
+    "eclypse.*",
+    "networkx",
+    "networkx.*",
+    "numpy",
+    "numpy.*",
+    "pandas",
+    "pandas.*",
+]
+ignore_missing_imports = true
+
+# --------------------------
+# Pytest and Coverage settings
+# --------------------------
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# --ignore-glob keeps iCloud sync-conflict duplicates (e.g. "test_runtime 2.py")
+# from ever being collected/run twice.
+addopts = "--cov=fedclypse --cov-report=xml --cov-report=term-missing --ignore-glob='* [0-9].py'"
+asyncio_mode = "auto"
+filterwarnings = ["ignore::DeprecationWarning", "ignore::FutureWarning"]
+markers = [
+    "integration: end-to-end integration tests",
+    "emulation: ray-backed remote integration tests",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["fedclypse"]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+    "raise NotImplementedError",
+]

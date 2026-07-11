@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use fedclypse in your work or research project, please cite it as below."
+title: "fedclypse: Federated Learning as a verticalization of ECLYPSE"
+version: 0.1.0
+date-released: 2026-07-11
+url: "https://github.com/eclypse-org/fedclypse"
+repository-code: "https://github.com/eclypse-org/fedclypse"
+license: "MIT"
+authors:
+  - family-names: "De Caro"
+    given-names: "Valerio"
+    orcid: "https://orcid.org/0000-0002-5267-6614"
