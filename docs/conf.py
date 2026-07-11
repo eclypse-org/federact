@@ -9,14 +9,14 @@ from datetime import datetime
 
 sys.path.insert(0, os.path.abspath(".."))
 
-import fedray
+import fedclypse
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
-project = "FedRay"
+project = "fedclypse"
 copyright = str(datetime.now().year) + ", Valerio De Caro"
 author = "Valerio De Caro"
-release = fedray.__version__
+release = fedclypse.__version__
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -48,10 +48,8 @@ autodoc_class_signature = "separated"
 
 html_theme = "sphinx_book_theme"
 html_title = "Version " + release
-html_logo = "_static/images/fedray_logo_name_color.png"
-# html_sidebars = {"Federation": ["generated/fedray.core.federation.Federation.rst"]}
 html_theme_options = {
-    "repository_url": "https://github.com/vdecaro/fedray",
+    "repository_url": "https://github.com/eclypse-org/fedclypse",
     "use_repository_button": True,
     "collapse_navigation": False,
 }
