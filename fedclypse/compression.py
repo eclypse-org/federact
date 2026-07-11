@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Compression policies: reduce the size of a Contribution's payload.
 
 A compression policy is a callable ``Parameters -> Parameters`` applied to a
@@ -6,13 +5,17 @@ contribution's payload before it crosses the wire (or before it is
 aggregated). ``identity`` is a no-op baseline; ``topk`` is a factory that
 builds a magnitude-based sparsification closure.
 """
+
 from __future__ import annotations
 
-from typing import Callable
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from fedclypse.core.parameters import Parameters
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 __all__ = ["identity", "topk"]
 
@@ -51,7 +54,7 @@ def topk(fraction: float) -> Callable[[Parameters], Parameters]:
         out = []
         for t in params.tensors:
             flat = t.ravel()
-            k = max(1, int(round(fraction * flat.size)))
+            k = max(1, round(fraction * flat.size))
             if k >= flat.size:
                 out.append(t.copy())
                 continue

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """fedclypse: Federated Learning as a verticalization of the eclypse simulator.
 
 Public API is organized into concept subpackages — e.g. ``fedclypse.core``,

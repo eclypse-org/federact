@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pytest
 from eclypse.builders.infrastructure import get_star
 

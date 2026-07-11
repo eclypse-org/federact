@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Sample-index partitioners: turn per-sample labels into per-client shards.
 
 A ``Partitioner`` maps a dataset's ``labels`` array to an index-map
@@ -11,20 +10,23 @@ unaffected), and ``NaturalId`` (client boundaries fixed by a pre-existing id
 column, e.g. writer/speaker/user id). ``data.split()`` drives a ``Partitioner``
 against a ``data.DataSource`` to build ``ClientData`` shards.
 """
+
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from typing import Dict, List
+from abc import (
+    ABC,
+    abstractmethod,
+)
 
 import numpy as np
 
 __all__ = [
-    "Partitioner",
     "IID",
     "Dirichlet",
+    "NaturalId",
+    "Partitioner",
     "Pathological",
     "QuantitySkew",
-    "NaturalId",
 ]
 
 
@@ -39,7 +41,7 @@ class Partitioner(ABC):
     @abstractmethod
     def partition(
         self, labels: np.ndarray, num_clients: int, seed: int
-    ) -> Dict[str, List[int]]:
+    ) -> dict[str, list[int]]:
         """Partition sample indices across clients.
 
         Args:
@@ -59,7 +61,7 @@ class IID(Partitioner):
 
     def partition(
         self, labels: np.ndarray, num_clients: int, seed: int
-    ) -> Dict[str, List[int]]:
+    ) -> dict[str, list[int]]:
         """Randomly shuffle and evenly split all sample indices.
 
         Args:
@@ -103,7 +105,7 @@ class Dirichlet(Partitioner):
 
     def partition(
         self, labels: np.ndarray, num_clients: int, seed: int
-    ) -> Dict[str, List[int]]:
+    ) -> dict[str, list[int]]:
         """Split each class's samples across clients via a Dirichlet draw.
 
         Args:
@@ -118,7 +120,7 @@ class Dirichlet(Partitioner):
         """
         rng = np.random.default_rng(seed)
         labels = np.asarray(labels)
-        result: Dict[str, List[int]] = {f"client_{i}": [] for i in range(num_clients)}
+        result: dict[str, list[int]] = {f"client_{i}": [] for i in range(num_clients)}
         for cls in np.unique(labels):
             class_idx = np.where(labels == cls)[0]
             rng.shuffle(class_idx)
@@ -153,7 +155,7 @@ class Pathological(Partitioner):
 
     def partition(
         self, labels: np.ndarray, num_clients: int, seed: int
-    ) -> Dict[str, List[int]]:
+    ) -> dict[str, list[int]]:
         """Cut label-sorted indices into shards and deal them out to clients.
 
         Args:
@@ -172,7 +174,7 @@ class Pathological(Partitioner):
         n_shards = num_clients * self.classes_per_client
         shards = np.array_split(order, n_shards)
         shard_order = rng.permutation(n_shards)
-        result: Dict[str, List[int]] = {}
+        result: dict[str, list[int]] = {}
         for i in range(num_clients):
             assigned = shard_order[
                 i * self.classes_per_client : (i + 1) * self.classes_per_client
@@ -209,7 +211,7 @@ class QuantitySkew(Partitioner):
 
     def partition(
         self, labels: np.ndarray, num_clients: int, seed: int
-    ) -> Dict[str, List[int]]:
+    ) -> dict[str, list[int]]:
         """Split shuffled indices into unequal-sized, label-agnostic shards.
 
         Args:
@@ -254,8 +256,11 @@ class NaturalId(Partitioner):
         self._ids = list(ids)
 
     def partition(
-        self, labels: np.ndarray, num_clients: int = 0, seed: int = 0
-    ) -> Dict[str, List[int]]:
+        self,
+        labels: np.ndarray,  # noqa: ARG002
+        num_clients: int = 0,  # noqa: ARG002
+        seed: int = 0,  # noqa: ARG002
+    ) -> dict[str, list[int]]:
         """Group sample indices by their pre-existing natural id.
 
         Args:
@@ -273,7 +278,7 @@ class NaturalId(Partitioner):
             unique id in ``self._ids``) to the list of sample indices sharing
             that id, covering every index exactly once.
         """
-        result: Dict[str, List[int]] = {}
+        result: dict[str, list[int]] = {}
         for i, gid in enumerate(self._ids):
             result.setdefault(f"client_{gid}", []).append(int(i))
         return result

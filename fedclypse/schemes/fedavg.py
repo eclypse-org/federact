@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Reference FedAvg behaviours: a thin, synchronous instance of the general roles.
 
 ``FedAvgServer`` and ``FedAvgClient`` demonstrate the star-topology FedAvg
@@ -10,16 +9,26 @@ no overrides at all. Both classes exist only to pin defaults and document the
 resulting behaviour; the actual round-driving, buffering, and reply logic
 lives in ``Aggregator``/``Learner``.
 """
+
 from __future__ import annotations
 
-from typing import Any, Callable, List, Optional
+from typing import (
+    TYPE_CHECKING,
+    Any,
+)
 
 from fedclypse.aggregation import fedavg
-from fedclypse.schemes.roles import Aggregator, Learner
+from fedclypse.schemes.roles import (
+    Aggregator,
+    Learner,
+)
 from fedclypse.selection import select_all
 from fedclypse.synchronization import Synchronous
 
-__all__ = ["FedAvgServer", "FedAvgClient"]
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+__all__ = ["FedAvgClient", "FedAvgServer"]
 
 
 class FedAvgServer(Aggregator):
@@ -41,10 +50,10 @@ class FedAvgServer(Aggregator):
         self,
         entity_id: str,
         *,
-        model_factory: Optional[Callable[[], Any]] = None,
+        model_factory: Callable[[], Any] | None = None,
         data: Any = None,
         rounds: int,
-        selection: Callable[[List[str]], List[str]] = select_all,
+        selection: Callable[[list[str]], list[str]] = select_all,
         **service_kwargs: Any,
     ) -> None:
         """Initialize the server with its round budget and cohort policy.

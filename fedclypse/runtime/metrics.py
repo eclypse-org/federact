@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Metrics: a ready-made round sampler and a read-only view over collected samples.
 
 ``round_metric`` is a ready-made ``@metric.service(remote=True)`` observable
@@ -6,17 +5,18 @@ that samples an entity's ``round`` attribute on the worker; ``History`` wraps
 the dataframe returned by ``sim.report.service()`` to read the samples back
 after an emulation completes.
 """
+
 from __future__ import annotations
 
-from typing import Any, List, Optional, Tuple
+from typing import Any
 
 from eclypse.report.metrics import metric
 
-__all__ = ["round_metric", "History"]
+__all__ = ["History", "round_metric"]
 
 
 @metric.service(remote=True, name="fedclypse_round")
-def round_metric(service: Any) -> Optional[int]:
+def round_metric(service: Any) -> int | None:
     """A ready-made remote metric: samples an entity's ``round`` on the worker.
 
     Write your own observables the same way — ``@metric.service(remote=True)`` gives
@@ -55,7 +55,7 @@ class History:
         self._frame = frame
 
     @classmethod
-    def from_report(cls, report: Any) -> "History":
+    def from_report(cls, report: Any) -> History:
         """Build a History from an eclypse report object.
 
         Args:
@@ -68,8 +68,8 @@ class History:
         return cls(report.service())
 
     def series(
-        self, metric_name: str, service_id: Optional[str] = None
-    ) -> List[Tuple[int, Any]]:
+        self, metric_name: str, service_id: str | None = None
+    ) -> list[tuple[int, Any]]:
         """Read back a metric's samples, ordered by event.
 
         Args:
@@ -88,9 +88,9 @@ class History:
         if service_id is not None:
             df = df[df["service_id"] == service_id]
         df = df.sort_values("n_event")
-        return [(int(n), v) for n, v in zip(df["n_event"], df["value"])]
+        return [(int(n), v) for n, v in zip(df["n_event"], df["value"], strict=False)]
 
-    def final(self, metric_name: str, service_id: Optional[str] = None) -> Any:
+    def final(self, metric_name: str, service_id: str | None = None) -> Any:
         """Return a metric's last sampled value.
 
         Args:

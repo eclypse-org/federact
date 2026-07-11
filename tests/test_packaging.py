@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Tests that fedclypse follows its packaging and documentation conventions."""
+
 from __future__ import annotations
 
 import importlib
@@ -38,7 +38,9 @@ def test_py_typed_marker_is_packaged():
 
 @pytest.mark.parametrize("modname", _public_modules())
 def test_module_documented(modname):
-    """Every public module/subpackage has a docstring, an ``__all__``, and resolvable exports."""
+    """Every public module/subpackage has a docstring, an ``__all__``, and resolvable
+    exports.
+    """
     module = importlib.import_module(modname)
     assert module.__doc__, f"{modname} missing a module docstring"
     assert hasattr(module, "__all__"), f"{modname} missing __all__"

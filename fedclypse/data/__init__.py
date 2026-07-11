@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """The data axis: re-openable data sources, client shards, and partitioners."""
+
 from fedclypse.data.partition import (
     IID,
     Dirichlet,
@@ -17,15 +17,15 @@ from fedclypse.data.source import (
 )
 
 __all__ = [
-    "DataSource",
-    "Subset",
-    "ClientData",
-    "InMemorySource",
-    "split",
-    "Partitioner",
     "IID",
+    "ClientData",
+    "DataSource",
     "Dirichlet",
+    "InMemorySource",
+    "NaturalId",
+    "Partitioner",
     "Pathological",
     "QuantitySkew",
-    "NaturalId",
+    "Subset",
+    "split",
 ]

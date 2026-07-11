@@ -1,13 +1,15 @@
-# -*- coding: utf-8 -*-
 """Homogeneous aggregation rules that combine contributions into new parameters."""
+
 from __future__ import annotations
 
-from typing import List
+from typing import TYPE_CHECKING
 
-from fedclypse.core.contribution import Contribution
 from fedclypse.core.parameters import Parameters
 
-__all__ = ["IncompatibleContributionsError", "weighted_sum", "mean", "fedavg"]
+if TYPE_CHECKING:
+    from fedclypse.core.contribution import Contribution
+
+__all__ = ["IncompatibleContributionsError", "fedavg", "mean", "weighted_sum"]
 
 
 class IncompatibleContributionsError(ValueError):
@@ -19,7 +21,7 @@ class IncompatibleContributionsError(ValueError):
     """
 
 
-def _check(contribs: List[Contribution]) -> None:
+def _check(contribs: list[Contribution]) -> None:
     if not contribs:
         raise ValueError("Cannot aggregate an empty list of contributions")
 
@@ -45,7 +47,7 @@ def _check(contribs: List[Contribution]) -> None:
         )
 
 
-def weighted_sum(contribs: List[Contribution]) -> Parameters:
+def weighted_sum(contribs: list[Contribution]) -> Parameters:
     """Aggregate contributions by their raw, unnormalized weight.
 
     Computes ``Σ wᵢ · payloadᵢ`` over the contributions, where ``wᵢ`` is each
@@ -73,7 +75,7 @@ def weighted_sum(contribs: List[Contribution]) -> Parameters:
     return acc
 
 
-def mean(contribs: List[Contribution]) -> Parameters:
+def mean(contribs: list[Contribution]) -> Parameters:
     """Aggregate contributions by a uniform, unweighted average.
 
     Computes the arithmetic mean of the payloads, ignoring each
@@ -99,7 +101,7 @@ def mean(contribs: List[Contribution]) -> Parameters:
     return acc.scale(1.0 / len(contribs))
 
 
-def fedavg(contribs: List[Contribution]) -> Parameters:
+def fedavg(contribs: list[Contribution]) -> Parameters:
     """Aggregate contributions by FedAvg's num-examples-weighted mean.
 
     Computes ``Σ (wᵢ / Σw) · payloadᵢ`` over the contributions, where ``wᵢ`` is

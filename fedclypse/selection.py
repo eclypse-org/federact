@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Cohort-selection policies: which neighbours participate in a round.
 
 A selection policy is a callable ``List[str] -> List[str]`` that, given the
@@ -7,15 +6,19 @@ to participate in a round. ``select_all`` is a plain function; ``uniform`` and
 ``at_most`` are factories that build a stateful, seeded policy closure so
 successive calls draw a fresh, reproducible sequence of cohorts.
 """
+
 from __future__ import annotations
 
 import random
-from typing import Callable, List
+from typing import TYPE_CHECKING
 
-__all__ = ["select_all", "uniform", "at_most"]
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+__all__ = ["at_most", "select_all", "uniform"]
 
 
-def select_all(neighbours: List[str]) -> List[str]:
+def select_all(neighbours: list[str]) -> list[str]:
     """Participation policy that selects every neighbour.
 
     Args:
@@ -27,7 +30,7 @@ def select_all(neighbours: List[str]) -> List[str]:
     return list(neighbours)
 
 
-def uniform(fraction: float, seed: int = 0) -> Callable[[List[str]], List[str]]:
+def uniform(fraction: float, seed: int = 0) -> Callable[[list[str]], list[str]]:
     """Build a policy that uniformly samples a fraction of the neighbours.
 
     Args:
@@ -43,7 +46,7 @@ def uniform(fraction: float, seed: int = 0) -> Callable[[List[str]], List[str]]:
     """
     rng = random.Random(seed)
 
-    def select(neighbours: List[str]) -> List[str]:
+    def select(neighbours: list[str]) -> list[str]:
         population = list(neighbours)
         k = min(len(population), max(1, round(fraction * len(population))))
         return rng.sample(population, k)
@@ -51,7 +54,7 @@ def uniform(fraction: float, seed: int = 0) -> Callable[[List[str]], List[str]]:
     return select
 
 
-def at_most(k: int, seed: int = 0) -> Callable[[List[str]], List[str]]:
+def at_most(k: int, seed: int = 0) -> Callable[[list[str]], list[str]]:
     """Build a policy that samples at most ``k`` neighbours per round.
 
     Args:
@@ -67,7 +70,7 @@ def at_most(k: int, seed: int = 0) -> Callable[[List[str]], List[str]]:
     """
     rng = random.Random(seed)
 
-    def select(neighbours: List[str]) -> List[str]:
+    def select(neighbours: list[str]) -> list[str]:
         population = list(neighbours)
         return rng.sample(population, min(k, len(population)))
 

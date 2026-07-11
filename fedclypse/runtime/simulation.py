@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Runtime assembly and driving: wire fedclypse entities into an eclypse Simulation.
 
 This module turns an Application (e.g. from ``fedclypse.deployment.topology``) into a
@@ -7,18 +6,31 @@ runnable eclypse experiment: ``build_simulation`` wires it to an infrastructure 
 simulation through an emulation to completion, returning the collected metric
 ``History``.
 """
+
 from __future__ import annotations
 
-from typing import List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from eclypse.builders.infrastructure import get_star
-from eclypse.graph import Application, Infrastructure
-from eclypse.placement.strategies import PlacementStrategy, RandomStrategy
-from eclypse.simulation import Simulation, SimulationConfig
+from eclypse.placement.strategies import (
+    RandomStrategy,
+)
+from eclypse.simulation import (
+    Simulation,
+    SimulationConfig,
+)
 
 if TYPE_CHECKING:
     # Only for the ``run_federation`` return-type annotation; the real,
     # non-circular import happens inside that function's body (see below).
+    from eclypse.graph import (
+        Application,
+        Infrastructure,
+    )
+    from eclypse.placement.strategies import (
+        PlacementStrategy,
+    )
+
     from fedclypse.runtime.metrics import History
 
 __all__ = ["build_simulation", "run_federation"]
@@ -41,22 +53,22 @@ def _require_symmetric_infrastructure(infrastructure: Infrastructure) -> None:
     missing = [(u, v) for (u, v) in edges if (v, u) not in edges]
     if missing:
         raise ValueError(
-            f"Infrastructure has asymmetric edge(s) {missing[:3]}; eclypse silently resets "
-            f"placement when a bidirectional Application edge lacks a reverse path. Build "
-            f"the infrastructure with symmetric=True."
+            f"Infrastructure has asymmetric edge(s) {missing[:3]}; eclypse silently "
+            f"resets placement when a bidirectional Application edge lacks a reverse "
+            f"path. Build the infrastructure with symmetric=True."
         )
 
 
 def build_simulation(
     application: Application,
-    infrastructure: Optional[Infrastructure] = None,
+    infrastructure: Infrastructure | None = None,
     *,
     rounds: int,
     seed: int = 0,
     mode: str = "emulation",
-    n_clients: Optional[int] = None,
-    metrics: Optional[List] = None,
-    placement: Optional[PlacementStrategy] = None,
+    n_clients: int | None = None,
+    metrics: list | None = None,
+    placement: PlacementStrategy | None = None,
 ) -> Simulation:
     """Wire an Application into an eclypse Simulation (does NOT run it).
 
@@ -133,7 +145,7 @@ def run_federation(
     *,
     step_delay: float = 0.5,
     grace: float = 1.0,
-) -> "History":
+) -> History:
     """Drive an emulation to completion and return its collected History.
 
     Encapsulates the verified emulation recipe: ``start``, then advance the simulation
@@ -159,9 +171,9 @@ def run_federation(
         History: The emulation's collected metric samples, read from
         ``simulation.report`` after ``stop()`` has torn the simulation down.
     """
-    import time
+    import time  # noqa: PLC0415
 
-    from fedclypse.runtime.metrics import History
+    from fedclypse.runtime.metrics import History  # noqa: PLC0415
 
     simulation.start()
     for _ in range(rounds):

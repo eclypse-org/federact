@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from fedclypse.selection import at_most, select_all, uniform
 
 IDS = [f"c{i}" for i in range(10)]

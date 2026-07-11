@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """The Contribution type: an opaque payload plus the provenance an aggregator needs.
 
 ``Contribution`` is the currency of exchange between federation nodes and
@@ -6,10 +5,11 @@ aggregation rules. This module also provides two convenience constructors,
 ``parameters`` and ``pseudogradient``, for the two most common ``Parameters``
 based payloads.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from fedclypse.core.parameters import Parameters
 
@@ -47,7 +47,7 @@ class Contribution:
     payload: Any
     source: str = ""
     version: int = 0
-    model_descriptor: Optional[str] = None
+    model_descriptor: str | None = None
     weight: float = 1.0
 
     @property
@@ -71,7 +71,7 @@ def parameters(
     *,
     source: str = "",
     version: int = 0,
-    model_descriptor: Optional[str] = None,
+    model_descriptor: str | None = None,
     weight: float = 1.0,
 ) -> Contribution:
     """Wrap a model's parameters as a Contribution (the homogeneous default).
@@ -107,7 +107,7 @@ def pseudogradient(
     *,
     source: str = "",
     version: int = 0,
-    model_descriptor: Optional[str] = None,
+    model_descriptor: str | None = None,
     weight: float = 1.0,
 ) -> Contribution:
     """Wrap the local model change ``after - before`` as a Contribution.

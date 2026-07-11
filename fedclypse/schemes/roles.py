@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Composable Aggregator/Learner role behaviours over the situated Entity.
 
 An Entity's roles are the mixins it subclasses. Each role contributes to a
@@ -16,20 +15,38 @@ model down to its children within a round. Two-way hierarchical aggregation and
 staleness-weighted async on a both-roles node need per-role ``model``/``round``
 separation and are deferred to a later roadmap item.
 """
+
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Callable, List, Optional
+from typing import (
+    TYPE_CHECKING,
+    Any,
+)
 
 from fedclypse.aggregation import fedavg
 from fedclypse.core.contribution import Contribution
 from fedclypse.core.entity import Entity
 from fedclypse.core.parameters import Parameters
-from fedclypse.optimization import ServerOpt, ServerSGD
+from fedclypse.optimization import (
+    ServerSGD,
+)
 from fedclypse.selection import select_all
-from fedclypse.synchronization import Synchronizer, Synchronous
+from fedclypse.synchronization import (
+    Synchronous,
+)
 
-__all__ = ["Roles", "Aggregator", "Learner"]
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from fedclypse.optimization import (
+        ServerOpt,
+    )
+    from fedclypse.synchronization import (
+        Synchronizer,
+    )
+
+__all__ = ["Aggregator", "Learner", "Roles"]
 
 
 class Roles(Entity):
@@ -42,7 +59,7 @@ class Roles(Entity):
     and ``_role_drivers`` concatenates each role's drivers.
     """
 
-    def _role_drivers(self) -> List[Any]:
+    def _role_drivers(self) -> list[Any]:
         """Collect the proactive driver coroutines contributed by each role.
 
         Returns:
@@ -52,7 +69,7 @@ class Roles(Entity):
         """
         return []
 
-    async def _handle(self, kind: Optional[str], message: dict) -> None:
+    async def _handle(self, kind: str | None, message: dict) -> None:  # noqa: ARG002
         """Route a received message to the matching role handler by ``kind``.
 
         The base is the end of the chain: an unclaimed ``kind`` is dropped.
@@ -127,7 +144,7 @@ class Learner(Roles):
         """
         return float(len(self.dataset)) if self.dataset is not None else 1.0
 
-    async def _handle(self, kind: Optional[str], message: dict) -> None:
+    async def _handle(self, kind: str | None, message: dict) -> None:
         """Handle a ``request`` by training and replying; delegate the rest.
 
         Args:
@@ -171,10 +188,10 @@ class Aggregator(Roles):
         entity_id: str,
         *,
         rounds: int,
-        selection: Callable[[List[str]], List[str]] = select_all,
-        synchronizer: Optional[Synchronizer] = None,
-        rule: Callable[[List[Contribution]], Parameters] = fedavg,
-        server_opt: Optional[ServerOpt] = None,
+        selection: Callable[[list[str]], list[str]] = select_all,
+        synchronizer: Synchronizer | None = None,
+        rule: Callable[[list[Contribution]], Parameters] = fedavg,
+        server_opt: ServerOpt | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize the aggregator with its round budget and composed mechanics.
@@ -208,9 +225,9 @@ class Aggregator(Roles):
         self.synchronizer = synchronizer or Synchronous()
         self.rule = rule
         self.server_opt = server_opt or ServerSGD(1.0)
-        self._buffer: List[Contribution] = []
-        self._cohort: List[str] = []
-        self._fires: Optional[asyncio.Queue] = None
+        self._buffer: list[Contribution] = []
+        self._cohort: list[str] = []
+        self._fires: asyncio.Queue | None = None
 
     def __getstate__(self) -> dict:
         """Exclude the runtime-only fire Queue from pickling.
@@ -228,7 +245,7 @@ class Aggregator(Roles):
         state["_fires"] = None
         return state
 
-    def aggregate(self, contributions: List[Contribution]) -> Parameters:
+    def aggregate(self, contributions: list[Contribution]) -> Parameters:
         """Combine contributions, folding staleness into each weight, via ``rule``.
 
         Args:
@@ -249,7 +266,11 @@ class Aggregator(Roles):
         ]
         return self.rule(reweighted)
 
-    async def disseminate(self, contributors: List[str], cohort: List[str]) -> None:
+    async def disseminate(
+        self,
+        contributors: list[str],
+        cohort: list[str],  # noqa: ARG002
+    ) -> None:
         """Send the updated model onward after a fire (customizable seam).
 
         Defaults to the contributors who just fired (correct for async;
@@ -262,7 +283,7 @@ class Aggregator(Roles):
         """
         await self._request(contributors)
 
-    async def _request(self, recipients: List[str]) -> None:
+    async def _request(self, recipients: list[str]) -> None:
         """Send the current model as a ``request`` to ``recipients`` (if any)."""
         params = self.model.get_parameters()
         if recipients:
@@ -274,7 +295,7 @@ class Aggregator(Roles):
                 model_descriptor=self.model.descriptor,
             )
 
-    async def _handle(self, kind: Optional[str], message: dict) -> None:
+    async def _handle(self, kind: str | None, message: dict) -> None:
         """Buffer a ``reply``, aggregating + re-arming synchronously on fire.
 
         Args:
@@ -302,9 +323,9 @@ class Aggregator(Roles):
             return None
         return await super()._handle(kind, message)
 
-    def _role_drivers(self) -> List[Any]:
+    def _role_drivers(self) -> list[Any]:
         """Append the aggregator driver to any inherited role drivers."""
-        return super()._role_drivers() + [self._aggregator_driver()]
+        return [*super()._role_drivers(), self._aggregator_driver()]
 
     async def _aggregator_driver(self) -> None:
         """Kick the cohort once, then fire->reselect->disseminate for ``rounds``.

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """The Entity base class: a situated eclypse Service for federated learning.
 
 ``Entity`` subclasses eclypse's ``Service`` and makes an FL participant's
@@ -6,11 +5,18 @@ situatedness (node, neighbourhood, data) and state (model) first-class,
 leaving behaviour to be written in ``run()``/``step()`` using the ``mpi``
 helpers this class wraps around eclypse's message passing.
 """
+
 from __future__ import annotations
 
-from typing import Any, Callable, List, Optional, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+)
 
 from eclypse.remote.service import Service
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 __all__ = ["Entity"]
 
@@ -30,8 +36,8 @@ class Entity(Service):
         self,
         entity_id: str,
         *,
-        model_factory: Optional[Callable[[], Any]] = None,
-        data: Optional[Any] = None,
+        model_factory: Callable[[], Any] | None = None,
+        data: Any | None = None,
         **service_kwargs: Any,
     ) -> None:
         """Initialize the entity in a neutral, undeployed state.
@@ -76,7 +82,7 @@ class Entity(Service):
         self.round = 0
 
     # ---- situatedness / communication (thin wrappers over eclypse mpi) ----
-    async def neighbours(self) -> List[str]:
+    async def neighbours(self) -> list[str]:
         """List the ids of this entity's topology neighbours.
 
         Returns:
@@ -85,7 +91,7 @@ class Entity(Service):
         """
         return await self.mpi.get_neighbors()
 
-    async def send(self, recipient_ids: Union[str, List[str]], **body: Any) -> None:
+    async def send(self, recipient_ids: str | list[str], **body: Any) -> None:
         """Send a message body to one or more neighbour entities.
 
         Args:

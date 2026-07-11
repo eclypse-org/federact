@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import subprocess
 import sys
 import textwrap
@@ -239,7 +238,8 @@ def test_buffered_async_emulation_smoke():
         )
         clients = [
             ConstantClient(
-                f"client_{i}", model_factory=lambda: ArrayModel(Parameters([np.zeros(3)]))
+                f"client_{i}",
+                model_factory=lambda: ArrayModel(Parameters([np.zeros(3)])),
             )
             for i in range(4)
         ]
@@ -415,7 +415,10 @@ def test_hierarchical_emulation_smoke():
             # both-roles mid: aggregates its leaves AND reports upward to its parent
             def __init__(self, entity_id, *, children, rounds, **kwargs):
                 super().__init__(
-                    entity_id, rounds=rounds, selection=SelectChildren(children), **kwargs
+                    entity_id,
+                    rounds=rounds,
+                    selection=SelectChildren(children),
+                    **kwargs,
                 )
 
             def local_update(self, params):
@@ -515,7 +518,8 @@ def test_server_optimizer_emulation_smoke():
         )
         clients = [
             ConstantClient(
-                f"client_{i}", model_factory=lambda: ArrayModel(Parameters([np.zeros(3)]))
+                f"client_{i}",
+                model_factory=lambda: ArrayModel(Parameters([np.zeros(3)])),
             )
             for i in range(2)
         ]

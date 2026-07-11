@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Server-side optimizers: apply the aggregated update as a pseudo-gradient.
 
 A ``ServerOpt`` treats the aggregated client update as a pseudo-gradient and
@@ -11,16 +10,19 @@ All optimizers are framework-agnostic numpy math over ``Parameters`` and are
 stateful -- their moment accumulators persist across rounds -- but the state is
 plain numpy, so it pickles cleanly across the worker boundary.
 """
+
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple
+from abc import (
+    ABC,
+    abstractmethod,
+)
 
 import numpy as np
 
 from fedclypse.core.parameters import Parameters
 
-__all__ = ["ServerOpt", "ServerSGD", "ServerAdagrad", "ServerAdam", "ServerYogi"]
+__all__ = ["ServerAdagrad", "ServerAdam", "ServerOpt", "ServerSGD", "ServerYogi"]
 
 
 class ServerOpt(ABC):
@@ -70,7 +72,7 @@ class ServerSGD(ServerOpt):
         """
         self.lr = lr
         self.momentum = momentum
-        self._buf: Optional[List[np.ndarray]] = None
+        self._buf: list[np.ndarray] | None = None
 
     def step(self, params: Parameters, delta: Parameters) -> Parameters:
         """Step ``params`` by ``lr`` along the (optionally accumulated) direction.
@@ -85,7 +87,7 @@ class ServerSGD(ServerOpt):
         if self._buf is None:
             self._buf = [np.zeros_like(t) for t in params.tensors]
         out = []
-        for i, (p, d) in enumerate(zip(params.tensors, delta.tensors)):
+        for i, (p, d) in enumerate(zip(params.tensors, delta.tensors, strict=False)):
             self._buf[i] = self.momentum * self._buf[i] + d
             out.append(p + self.lr * self._buf[i])
         return Parameters(out, params.tensor_type)
@@ -104,7 +106,7 @@ class ServerAdagrad(ServerOpt):
         """
         self.lr = lr
         self.eps = eps
-        self._v: Optional[List[np.ndarray]] = None
+        self._v: list[np.ndarray] | None = None
 
     def step(self, params: Parameters, delta: Parameters) -> Parameters:
         """Accumulate ``v += delta**2`` and step ``lr * delta / (sqrt(v) + eps)``.
@@ -119,7 +121,7 @@ class ServerAdagrad(ServerOpt):
         if self._v is None:
             self._v = [np.zeros_like(t) for t in params.tensors]
         out = []
-        for i, (p, d) in enumerate(zip(params.tensors, delta.tensors)):
+        for i, (p, d) in enumerate(zip(params.tensors, delta.tensors, strict=False)):
             self._v[i] = self._v[i] + d * d
             out.append(p + self.lr * d / (np.sqrt(self._v[i]) + self.eps))
         return Parameters(out, params.tensor_type)
@@ -134,7 +136,7 @@ class _AdamFamily(ServerOpt):
     """
 
     def __init__(
-        self, lr: float, betas: Tuple[float, float] = (0.9, 0.999), eps: float = 1e-8
+        self, lr: float, betas: tuple[float, float] = (0.9, 0.999), eps: float = 1e-8
     ) -> None:
         """Initialize the learning rate, moment decays, and eps.
 
@@ -150,8 +152,8 @@ class _AdamFamily(ServerOpt):
         self.beta1, self.beta2 = betas
         self.eps = eps
         self._t = 0
-        self._m: Optional[List[np.ndarray]] = None
-        self._v: Optional[List[np.ndarray]] = None
+        self._m: list[np.ndarray] | None = None
+        self._v: list[np.ndarray] | None = None
 
     @abstractmethod
     def _next_v(self, v: np.ndarray, g2: np.ndarray) -> np.ndarray:
@@ -181,7 +183,7 @@ class _AdamFamily(ServerOpt):
             self._v = [np.zeros_like(t) for t in params.tensors]
         self._t += 1
         out = []
-        for i, (p, d) in enumerate(zip(params.tensors, delta.tensors)):
+        for i, (p, d) in enumerate(zip(params.tensors, delta.tensors, strict=False)):
             self._m[i] = self.beta1 * self._m[i] + (1.0 - self.beta1) * d
             self._v[i] = self._next_v(self._v[i], d * d)
             m_hat = self._m[i] / (1.0 - self.beta1**self._t)

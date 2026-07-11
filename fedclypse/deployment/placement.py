@@ -1,42 +1,51 @@
-# -*- coding: utf-8 -*-
 """Physical placement: mapping entities onto infrastructure nodes.
 
-The communication topology (``fedclypse.deployment.topology``) and the physical placement are
-independent. This module reuses eclypse's ``PlacementStrategy`` suite directly
-(``StaticStrategy``, ``RoundRobinStrategy``, ``RandomStrategy``, ``FirstFitStrategy``,
-``BestFitStrategy``) and adds only the conveniences the deployment spectrum needs:
-``mirror`` for faithful 1-to-1 emulation (derive the comm graph from an infrastructure),
-and ``collapse`` for the compute-constrained case (many entities on one node). Value-based
-placement is an extension point: subclass eclypse's ``PlacementStrategy`` and override
-``place`` to spawn learners on the most valuable nodes (e.g. data locality). NOTE: pinning
-many entities to one node (``collapse``) co-locates their training loops in one Ray actor;
-capping how many run at once (per the node's GPUs) is a separate concurrency concern, not
-handled here.
+The communication topology (``fedclypse.deployment.topology``) and the physical
+placement are independent. This module reuses eclypse's ``PlacementStrategy`` suite
+directly (``StaticStrategy``, ``RoundRobinStrategy``, ``RandomStrategy``,
+``FirstFitStrategy``, ``BestFitStrategy``) and adds only the conveniences the deployment
+spectrum needs: ``mirror`` for faithful 1-to-1 emulation (derive the comm graph from an
+infrastructure), and ``collapse`` for the compute-constrained case (many entities on one
+node). Value-based placement is an extension point: subclass eclypse's
+``PlacementStrategy`` and override ``place`` to spawn learners on the most valuable
+nodes (e.g. data locality). NOTE: pinning many entities to one node (``collapse``)
+co-locates their training loops in one Ray actor; capping how many run at once (per the
+node's GPUs) is a separate concurrency concern, not handled here.
 """
+
 from __future__ import annotations
 
-from typing import Dict, List, Sequence, Tuple
+from typing import TYPE_CHECKING
 
-from eclypse.graph import Application, Infrastructure
+from eclypse.graph import (
+    Application,
+)
 from eclypse.placement.strategies import StaticStrategy
 
-from fedclypse.core.entity import Entity
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
-__all__ = ["mirror", "collapse"]
+    from eclypse.graph import (
+        Infrastructure,
+    )
+
+    from fedclypse.core.entity import Entity
+
+__all__ = ["collapse", "mirror"]
 
 
 def mirror(
     infrastructure: Infrastructure,
     entities: Sequence[Entity],
     application_id: str = "fedclypse",
-) -> Tuple[Application, StaticStrategy]:
+) -> tuple[Application, StaticStrategy]:
     """Pin entities 1-to-1 onto infra nodes and mirror the infra topology into comm.
 
     Assigns ``entities[k]`` to the ``k``-th infrastructure node (by sorted node id) and
     builds an Application whose edges are the infrastructure's edges translated through
-    that mapping — a symmetric Application edge for every infrastructure edge. This is how
-    eclypse's infrastructure topology suite (hierarchical, random, realistic fabrics)
-    becomes an FL communication topology for faithful emulation.
+    that mapping — a symmetric Application edge for every infrastructure edge. This is
+    how eclypse's infrastructure topology suite (hierarchical, random, realistic
+    fabrics) becomes an FL communication topology for faithful emulation.
 
     Args:
         infrastructure (Infrastructure): The infrastructure whose topology is mirrored.
@@ -49,17 +58,18 @@ def mirror(
         placement pinning each entity to its infrastructure node.
 
     Raises:
-        ValueError: If ``len(entities)`` does not equal the number of infrastructure nodes.
+        ValueError: If ``len(entities)`` does not equal the number of infrastructure
+            nodes.
     """
-    node_ids: List[str] = sorted(infrastructure.nodes)
+    node_ids: list[str] = sorted(infrastructure.nodes)
     if len(entities) != len(node_ids):
         raise ValueError(
             f"mirror() requires exactly one entity per infra node: "
             f"{len(entities)} entities vs {len(node_ids)} infra nodes."
         )
 
-    node_to_entity: Dict[str, Entity] = dict(zip(node_ids, entities))
-    mapping: Dict[str, str] = {
+    node_to_entity: dict[str, Entity] = dict(zip(node_ids, entities, strict=False))
+    mapping: dict[str, str] = {
         entity.id: node for node, entity in node_to_entity.items()
     }
 

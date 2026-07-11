@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import numpy as np
 
 from fedclypse.data import ClientData, InMemorySource, Subset, split

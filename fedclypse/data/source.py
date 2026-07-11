@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Cluster-safe dataset access: re-openable sources, client shards, and splitting.
 
 The data layer is designed so that only integer indices ever need to cross the
@@ -10,15 +9,25 @@ on the worker to lazily view just that client's shard. ``split()`` ties a
 ``DataSource`` and a ``partition.Partitioner`` together to build the
 per-client ``ClientData`` mapping.
 """
+
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import (
+    ABC,
+    abstractmethod,
+)
 from dataclasses import dataclass
-from typing import Any, Dict, List, Sequence
+from typing import (
+    TYPE_CHECKING,
+    Any,
+)
 
 import numpy as np
 
-__all__ = ["DataSource", "Subset", "ClientData", "InMemorySource", "split"]
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+__all__ = ["ClientData", "DataSource", "InMemorySource", "Subset", "split"]
 
 
 class DataSource(ABC):
@@ -64,9 +73,11 @@ class Subset:
         self.indices = list(indices)
 
     def __len__(self) -> int:
+        """int: The number of samples in this subset."""
         return len(self.indices)
 
     def __getitem__(self, i: int) -> Any:
+        """Any: The sample at position ``i`` within this subset."""
         return self.dataset[self.indices[i]]
 
 
@@ -84,9 +95,10 @@ class ClientData:
     """
 
     source: DataSource
-    indices: List[int]
+    indices: list[int]
 
     def __post_init__(self) -> None:
+        """Copy ``indices`` into a plain list so it is picklable and owned."""
         self.indices = list(self.indices)
 
     def materialize(self) -> Subset:
@@ -139,7 +151,7 @@ class InMemorySource(DataSource):
 
 def split(
     source: DataSource, partitioner: Any, num_clients: int, seed: int = 0
-) -> Dict[str, ClientData]:
+) -> dict[str, ClientData]:
     """Partition ``source`` across clients and return ``{client_id: ClientData}``.
 
     The partition is computed on the driver from ``source.labels()``; each returned

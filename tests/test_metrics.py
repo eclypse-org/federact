@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pandas as pd
 
 from fedclypse.runtime import History

@@ -1,14 +1,13 @@
-# -*- coding: utf-8 -*-
 """Framework-agnostic container for the model tensors carried by a Contribution.
 
 ``Parameters`` is the default payload realization used across fedclypse: it
 holds a model's tensors as plain numpy arrays so aggregation rules can combine
 them without depending on any particular deep-learning framework.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Tuple
 
 import numpy as np
 
@@ -39,15 +38,15 @@ class Parameters:
             ``"numpy"``.
     """
 
-    tensors: List[np.ndarray]
+    tensors: list[np.ndarray]
     tensor_type: str = "numpy"
 
     @property
-    def shapes(self) -> List[Tuple[int, ...]]:
+    def shapes(self) -> list[tuple[int, ...]]:
         """List[Tuple[int, ...]]: The shape of each tensor, in order."""
         return [t.shape for t in self.tensors]
 
-    def is_compatible(self, other: "Parameters") -> bool:
+    def is_compatible(self, other: Parameters) -> bool:
         """Check whether two parameter bundles have matching tensor shapes.
 
         Args:
@@ -60,7 +59,7 @@ class Parameters:
         """
         return self.shapes == other.shapes
 
-    def zeros_like(self) -> "Parameters":
+    def zeros_like(self) -> Parameters:
         """Build a zero-filled bundle with the same shapes and tensor type.
 
         Returns:
@@ -70,7 +69,7 @@ class Parameters:
         """
         return Parameters([np.zeros_like(t) for t in self.tensors], self.tensor_type)
 
-    def add(self, other: "Parameters") -> "Parameters":
+    def add(self, other: Parameters) -> Parameters:
         """Add two parameter bundles element-wise.
 
         Args:
@@ -91,10 +90,11 @@ class Parameters:
                 f"{self.shapes} vs {other.shapes}"
             )
         return Parameters(
-            [a + b for a, b in zip(self.tensors, other.tensors)], self.tensor_type
+            [a + b for a, b in zip(self.tensors, other.tensors, strict=False)],
+            self.tensor_type,
         )
 
-    def scale(self, factor: float) -> "Parameters":
+    def scale(self, factor: float) -> Parameters:
         """Scale every tensor by a scalar factor.
 
         Args:

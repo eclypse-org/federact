@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import numpy as np
 
 from fedclypse.core import Parameters
@@ -77,7 +76,8 @@ def test_serveradam_instances_do_not_share_state():
 
 
 def test_serveryogi_first_step_matches_adam_then_diverges_by_sign_rule():
-    # v0 = 0, so first-step v = -(1-b2)*sign(0 - g^2)*g^2 = +(1-b2)*g^2 == Adam's first v.
+    # v0 = 0, so first-step v = -(1-b2)*sign(0 - g^2)*g^2 = +(1-b2)*g^2 ==
+    # Adam's first v.
     out = ServerYogi(lr=1.0, eps=0.0).step(_p([0.0]), _p([1.0]))
     assert np.allclose(out.tensors[0], [1.0])
     # Yogi's v update is sign-based; assert it runs a second step and advances state.

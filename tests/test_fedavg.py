@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import numpy as np
 
 from fedclypse.core import ArrayModel, Contribution, Parameters

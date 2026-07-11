@@ -1,0 +1,88 @@
+target-version = "py311"
+
+include = ["fedclypse/**/*.py", "tests/**/*.py"]
+line-length = 88
+indent-width = 4
+
+exclude = [
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".tox",
+    ".venv",
+    "build",
+    "dist",
+    "examples",
+    "docs",
+]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true
+skip-magic-trailing-comma = false
+
+[lint]
+select = [
+    "E",
+    "F",
+    "W",
+    # "I", # isort works better so far
+    "B",
+    "UP",
+    "SIM",
+    "C90",
+    "RUF",
+    "TCH",
+    "PL",
+    "ARG",
+    "D",
+]
+
+fixable = ["ALL"]
+
+[lint.mccabe]
+max-complexity = 10
+
+[lint.pylint]
+max-args = 20
+max-locals = 30
+max-branches = 15
+max-positional-args = 20
+
+[lint.pycodestyle]
+max-doc-length = 100
+max-line-length = 88
+
+[lint.pydocstyle]
+convention = "google"
+
+[lint.flake8-type-checking]
+strict = true
+
+[lint.flake8-tidy-imports]
+banned-module-level-imports = ["ray"]
+
+[lint.per-file-ignores]
+"**/__init__.py" = ["I001"] # allow re-exported symbols
+"tests/**" = [
+    "D",
+    "ARG005",
+    "B018",
+    "C901",
+    "PLR0915",
+    "PLR1711",
+    "PLR2004",
+    "PLW0108",
+    "RUF012",
+    "RUF100",
+    "TC003",
+    "UP037",
+    # test doubles have unused interface args (ARG002); tests import inside
+    # functions for subprocess/isolation (PLC0415); the emulation smokes call
+    # subprocess.run(...) and assert returncode manually (PLW1510)
+    "ARG002",
+    "PLC0415",
+    "PLW1510",
+]

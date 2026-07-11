@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Synchronization policies: the aggregation trigger.
 
 A ``Synchronizer`` decides *when* a round fires (``ready``) and *how* a
@@ -10,18 +9,25 @@ This module provides three reference policies -- ``Synchronous`` (barrier),
 every arrival, staleness-weighted) -- plus the default staleness function
 ``inverse_staleness``.
 """
+
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from typing import Callable, List
+from abc import (
+    ABC,
+    abstractmethod,
+)
+from typing import TYPE_CHECKING
 
-from fedclypse.core.contribution import Contribution
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from fedclypse.core.contribution import Contribution
 
 __all__ = [
+    "Asynchronous",
+    "BufferedAsync",
     "Synchronizer",
     "Synchronous",
-    "BufferedAsync",
-    "Asynchronous",
     "inverse_staleness",
 ]
 
@@ -35,7 +41,7 @@ class Synchronizer(ABC):
     """
 
     @abstractmethod
-    def ready(self, collected: List[Contribution], cohort: List[str]) -> bool:
+    def ready(self, collected: list[Contribution], cohort: list[str]) -> bool:
         """Decide whether the collected contributions are enough to aggregate.
 
         Args:
@@ -49,7 +55,11 @@ class Synchronizer(ABC):
         """
         ...
 
-    def staleness_weight(self, contribution: Contribution, current_round: int) -> float:
+    def staleness_weight(
+        self,
+        contribution: Contribution,  # noqa: ARG002
+        current_round: int,  # noqa: ARG002
+    ) -> float:
         """Compute the staleness multiplier applied to a contribution.
 
         The base implementation applies no staleness discount.
@@ -69,7 +79,7 @@ class Synchronizer(ABC):
 class Synchronous(Synchronizer):
     """Barrier: fire once every selected member of the cohort has reported."""
 
-    def ready(self, collected: List[Contribution], cohort: List[str]) -> bool:
+    def ready(self, collected: list[Contribution], cohort: list[str]) -> bool:
         """Check whether every cohort member has reported.
 
         Args:
@@ -107,7 +117,11 @@ class BufferedAsync(Synchronizer):
             raise ValueError("BufferedAsync requires k >= 1")
         self.k = k
 
-    def ready(self, collected: List[Contribution], cohort: List[str]) -> bool:
+    def ready(
+        self,
+        collected: list[Contribution],
+        cohort: list[str],  # noqa: ARG002
+    ) -> bool:
         """Check whether the buffer threshold has been reached.
 
         Args:
@@ -151,7 +165,11 @@ class Asynchronous(Synchronizer):
         """
         self.staleness_fn = staleness_fn
 
-    def ready(self, collected: List[Contribution], cohort: List[str]) -> bool:
+    def ready(
+        self,
+        collected: list[Contribution],
+        cohort: list[str],  # noqa: ARG002
+    ) -> bool:
         """Check whether at least one contribution has arrived.
 
         Args:

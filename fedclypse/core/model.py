@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """The Model abstraction: an entity's framework-coupled state.
 
 ``Model`` exposes an entity's state to the federation only through the
@@ -8,13 +7,17 @@ This module also provides ``ArrayModel``, a framework-agnostic reference
 implementation used in tests and for pure-simulation runs without a deep
 learning framework.
 """
+
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import (
+    ABC,
+    abstractmethod,
+)
 
 from fedclypse.core.parameters import Parameters
 
-__all__ = ["Model", "ArrayModel"]
+__all__ = ["ArrayModel", "Model"]
 
 
 class Model(ABC):

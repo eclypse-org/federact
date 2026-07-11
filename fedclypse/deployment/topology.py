@@ -1,24 +1,28 @@
-# -*- coding: utf-8 -*-
 """Logical communication-topology builders for federations.
 
 Each builder returns an eclypse ``Application`` whose edges are the FL communication
-graph — who exchanges with whom. ``get_neighbors`` follows this graph, so it is the
-sole determinant of comm topology; the physical infrastructure is decoupled
-(see ``fedclypse.deployment.placement``). ``from_graph`` is the general primitive; ``star``,
+graph — who exchanges with whom. ``get_neighbors`` follows this graph, so it is the sole
+determinant of comm topology; the physical infrastructure is decoupled (see
+``fedclypse.deployment.placement``). ``from_graph`` is the general primitive; ``star``,
 ``ring`` and ``complete`` are thin conveniences over it. Hierarchical, random and
 realistic topologies are obtained by passing the corresponding ``networkx`` graph to
-``from_graph``, or by mirroring an eclypse infrastructure (``fedclypse.deployment.placement.mirror``).
+``from_graph``, or by mirroring an eclypse infrastructure
+(``fedclypse.deployment.placement.mirror``).
 """
+
 from __future__ import annotations
 
-from typing import Sequence
+from typing import TYPE_CHECKING
 
 import networkx as nx
 from eclypse.graph import Application
 
-from fedclypse.core.entity import Entity
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
-__all__ = ["from_graph", "star", "ring", "complete"]
+    from fedclypse.core.entity import Entity
+
+__all__ = ["complete", "from_graph", "ring", "star"]
 
 
 def from_graph(

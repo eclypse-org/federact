@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """The experiment layer: compose a Situation and a Behaviour into a runnable study.
 
 An FL experiment factorizes into a **Situation** (who the nodes are, their roles,
@@ -10,30 +9,45 @@ trajectory (a metric ``History``). ``rounds`` is the run horizon, not part of th
 Behaviour, so a sweep is a plain ``map`` over situations x behaviours x seeds -- there
 is no experiment-manager object.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional
+from typing import (
+    TYPE_CHECKING,
+    Any,
+)
 
 import networkx as nx
-from eclypse.graph import Infrastructure
-from eclypse.placement.strategies import PlacementStrategy
 
-from fedclypse.core.entity import Entity
-from fedclypse.data.source import ClientData
 from fedclypse.deployment.topology import from_graph
-from fedclypse.runtime.metrics import History
-from fedclypse.runtime.simulation import build_simulation, run_federation
-from fedclypse.schemes.fedavg import FedAvgClient, FedAvgServer
+from fedclypse.runtime.simulation import (
+    build_simulation,
+    run_federation,
+)
+from fedclypse.schemes.fedavg import (
+    FedAvgClient,
+    FedAvgServer,
+)
 from fedclypse.selection import select_all
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from eclypse.graph import Infrastructure
+    from eclypse.placement.strategies import PlacementStrategy
+
+    from fedclypse.core.entity import Entity
+    from fedclypse.data.source import ClientData
+    from fedclypse.runtime.metrics import History
+
 __all__ = [
+    "Behaviour",
     "NodeSpec",
     "Situation",
-    "Behaviour",
+    "fedavg_behaviour",
     "run",
     "star_situation",
-    "fedavg_behaviour",
 ]
 
 
@@ -57,8 +71,8 @@ class NodeSpec:
 
     id: str
     role: str
-    data: Optional[ClientData] = None
-    model_factory: Optional[Callable[[], Any]] = None
+    data: ClientData | None = None
+    model_factory: Callable[[], Any] | None = None
 
 
 @dataclass
@@ -81,10 +95,10 @@ class Situation:
             ``None`` (``build_simulation``'s default).
     """
 
-    nodes: List[NodeSpec]
+    nodes: list[NodeSpec]
     graph: nx.Graph
-    infrastructure: Optional[Infrastructure] = None
-    placement: Optional[PlacementStrategy] = None
+    infrastructure: Infrastructure | None = None
+    placement: PlacementStrategy | None = None
 
 
 @dataclass
@@ -102,7 +116,7 @@ class Behaviour:
             builder.
     """
 
-    roles: Dict[str, Callable[["NodeSpec", int], Entity]]
+    roles: dict[str, Callable[[NodeSpec, int], Entity]]
 
 
 def run(
@@ -112,7 +126,7 @@ def run(
     rounds: int,
     seed: int = 0,
     mode: str = "emulation",
-    metrics: Optional[List] = None,
+    metrics: list | None = None,
     step_delay: float = 0.5,
     grace: float = 1.0,
 ) -> History:
@@ -169,12 +183,12 @@ def run(
 
 def star_situation(
     server_id: str,
-    client_ids: List[str],
+    client_ids: list[str],
     *,
-    data: Optional[Dict[str, ClientData]] = None,
-    model_factory: Optional[Callable[[], Any]] = None,
-    infrastructure: Optional[Infrastructure] = None,
-    placement: Optional[PlacementStrategy] = None,
+    data: dict[str, ClientData] | None = None,
+    model_factory: Callable[[], Any] | None = None,
+    infrastructure: Infrastructure | None = None,
+    placement: PlacementStrategy | None = None,
 ) -> Situation:
     """Build a client-server star Situation: a ``server`` plus ``client`` leaves.
 
@@ -210,9 +224,9 @@ def star_situation(
 
 
 def fedavg_behaviour(
-    *, selection: Callable[[List[str]], List[str]] = select_all
+    *, selection: Callable[[list[str]], list[str]] = select_all
 ) -> Behaviour:
-    """Build the reference FedAvg Behaviour: a ``server`` aggregator + ``client`` learners.
+    """Build the FedAvg Behaviour: a ``server`` aggregator + ``client`` learners.
 
     Args:
         selection (Callable[[List[str]], List[str]]): The server's cohort-selection
@@ -232,7 +246,7 @@ def fedavg_behaviour(
             data=node.data,
         )
 
-    def client(node: NodeSpec, rounds: int) -> Entity:
+    def client(node: NodeSpec, rounds: int) -> Entity:  # noqa: ARG001
         return FedAvgClient(node.id, model_factory=node.model_factory, data=node.data)
 
     return Behaviour(roles={"server": server, "client": client})
